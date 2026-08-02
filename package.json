@@ -26,8 +26,9 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
+  "packageManager": "pnpm@11.18.0",
   "publishConfig": {
     "access": "public",
     "provenance": true
@@ -38,7 +39,21 @@
     "fountain",
     "scriptwriting"
   ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --project integration",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm typecheck && pnpm test"
+  },
   "dependencies": {
     "@firecrawl/pdf-inspector": "1.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }
