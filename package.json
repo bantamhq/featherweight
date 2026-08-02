@@ -1,0 +1,44 @@
+{
+  "name": "@bantam-hq/featherweight",
+  "version": "0.0.0",
+  "description": "Recover semantic screenplay documents from PDFs.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Bantam HQ",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "featherweight": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "pdf",
+    "screenplay",
+    "fountain",
+    "scriptwriting"
+  ],
+  "dependencies": {
+    "@firecrawl/pdf-inspector": "1.11.2"
+  }
+}
