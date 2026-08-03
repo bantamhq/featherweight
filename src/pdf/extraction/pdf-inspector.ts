@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { createRequire } from "node:module";
 
+import { PdfInspectionError } from "../inspection-error.js";
 import { PdfExtractionError } from "./errors.js";
 import type {
   PositionedPdfText,
@@ -23,23 +24,29 @@ export interface PdfInspectorTextItemInput {
   readonly isStrikeout?: boolean;
 }
 
-interface PdfInspectorModule {
+interface PdfInspectorExtractionModule {
   extractTextWithPositions(buffer: Buffer): readonly PdfInspectorTextItemInput[];
 }
+
+interface PdfInspectorInspectionModule {
+  classifyPdf(buffer: Buffer): PdfInspectorClassification;
+}
+
+interface PdfInspectorClassification {
+  readonly pageCount: number;
+  readonly pagesNeedingOcr: readonly number[];
+}
+
+type PdfInspectorOperation = "extraction" | "inspection";
 
 export function extractPositionedPdfText(
   pdfBytes: Uint8Array,
 ): PositionedPdfText {
-  const pdfInspector = loadPdfInspector();
+  const pdfInspector = loadPdfInspector("extraction");
   let nativeItems: readonly PdfInspectorTextItemInput[];
 
   try {
-    const buffer = Buffer.from(
-      pdfBytes.buffer,
-      pdfBytes.byteOffset,
-      pdfBytes.byteLength,
-    );
-    nativeItems = pdfInspector.extractTextWithPositions(buffer);
+    nativeItems = pdfInspector.extractTextWithPositions(toPdfBuffer(pdfBytes));
   } catch (cause) {
     if (cause instanceof PdfExtractionError) {
       throw cause;
@@ -49,6 +56,27 @@ export function extractPositionedPdfText(
   }
 
   return translatePdfInspectorTextItems(nativeItems);
+}
+
+export function classifyPdfForOcr(
+  pdfBytes: Uint8Array,
+): PdfInspectorClassification {
+  const pdfInspector = loadPdfInspector("inspection");
+
+  try {
+    const classification = pdfInspector.classifyPdf(toPdfBuffer(pdfBytes));
+
+    return {
+      pageCount: classification.pageCount,
+      pagesNeedingOcr: classification.pagesNeedingOcr,
+    };
+  } catch (cause) {
+    if (cause instanceof PdfInspectionError) {
+      throw cause;
+    }
+
+    throw new PdfInspectionError("PDF_INSPECTION_FAILED", cause);
+  }
 }
 
 export function translatePdfInspectorTextItems(
@@ -99,27 +127,68 @@ export function translatePdfInspectorTextItems(
   return { items: translatedItems };
 }
 
-function loadPdfInspector(): PdfInspectorModule {
+function loadPdfInspector(
+  operation: "extraction",
+): PdfInspectorExtractionModule;
+function loadPdfInspector(
+  operation: "inspection",
+): PdfInspectorInspectionModule;
+function loadPdfInspector(
+  operation: PdfInspectorOperation,
+): PdfInspectorExtractionModule | PdfInspectorInspectionModule {
   try {
     const require = createRequire(import.meta.url);
     const pdfInspector: unknown = require("@firecrawl/pdf-inspector");
 
-    if (!isPdfInspectorModule(pdfInspector)) {
+    if (operation === "extraction") {
+      if (!isPdfInspectorExtractionModule(pdfInspector)) {
+        throw new Error("PDF inspector binding has an invalid interface.");
+      }
+
+      return pdfInspector;
+    }
+
+    if (!isPdfInspectorInspectionModule(pdfInspector)) {
       throw new Error("PDF inspector binding has an invalid interface.");
     }
 
     return pdfInspector;
   } catch (cause) {
+    if (operation === "inspection") {
+      throw new PdfInspectionError("PDF_BINDING_UNAVAILABLE", cause);
+    }
+
     throw new PdfExtractionError("PDF_BINDING_UNAVAILABLE", cause);
   }
 }
 
-function isPdfInspectorModule(value: unknown): value is PdfInspectorModule {
+function isPdfInspectorExtractionModule(
+  value: unknown,
+): value is PdfInspectorExtractionModule {
   return (
     typeof value === "object" &&
     value !== null &&
     "extractTextWithPositions" in value &&
     typeof value.extractTextWithPositions === "function"
+  );
+}
+
+function isPdfInspectorInspectionModule(
+  value: unknown,
+): value is PdfInspectorInspectionModule {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "classifyPdf" in value &&
+    typeof value.classifyPdf === "function"
+  );
+}
+
+function toPdfBuffer(pdfBytes: Uint8Array): Buffer {
+  return Buffer.from(
+    pdfBytes.buffer,
+    pdfBytes.byteOffset,
+    pdfBytes.byteLength,
   );
 }
 

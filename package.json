@@ -40,12 +40,13 @@
     "scriptwriting"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm typecheck && pnpm test"
+    "check": "pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@firecrawl/pdf-inspector": "1.11.2"

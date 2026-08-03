@@ -61,8 +61,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 Source: [FountainTests/Brick And Steel.txt](https://github.com/nyousefi/Fountain/blob/master/FountainTests/Brick%20And%20Steel.txt)
 
-`test/brick-and-steel.fountain` and the derived `test/brick-and-steel.pdf`
-are redistributed under the upstream MIT License.
+`test/brick-and-steel.fountain`, the derived `test/brick-and-steel.pdf`, and
+the further derived `test/brick-and-steel-scanned.pdf` and
+`test/brick-and-steel-mixed.pdf` are redistributed under the upstream MIT
+License.
 
 Copyright (c) 2012 Nima Yousefi & John August
 
