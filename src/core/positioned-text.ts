@@ -1,30 +1,30 @@
-export interface PositionedPdfText {
-  readonly items: readonly PositionedPdfTextItem[];
+export interface PositionedText {
+  readonly items: readonly PositionedTextItem[];
 }
 
-export interface PositionedPdfTextItem {
+export interface PositionedTextItem {
   readonly sourceIndex: number;
   readonly sourceMethod: "embedded-text";
   readonly pageIndex: number;
   readonly text: string;
-  readonly bounds: PositionedPdfTextBounds;
-  readonly font: PositionedPdfTextFont;
-  readonly style: PositionedPdfTextStyle;
+  readonly bounds: PositionedTextBounds;
+  readonly font: PositionedTextFont;
+  readonly style: PositionedTextStyle;
 }
 
-export interface PositionedPdfTextBounds {
+export interface PositionedTextBounds {
   readonly x: number;
   readonly y: number;
   readonly width: number;
   readonly height: number;
 }
 
-export interface PositionedPdfTextFont {
+export interface PositionedTextFont {
   readonly name: string;
   readonly size: number;
 }
 
-export interface PositionedPdfTextStyle {
+export interface PositionedTextStyle {
   readonly bold: boolean;
   readonly italic: boolean;
   readonly underline: boolean;

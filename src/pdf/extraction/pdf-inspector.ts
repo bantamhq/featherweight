@@ -1,12 +1,12 @@
 import { Buffer } from "node:buffer";
 import { createRequire } from "node:module";
 
+import type {
+  PositionedText,
+  PositionedTextItem,
+} from "../../core/positioned-text.js";
 import { PdfInspectionError } from "../inspection-error.js";
 import { PdfExtractionError } from "./errors.js";
-import type {
-  PositionedPdfText,
-  PositionedPdfTextItem,
-} from "./positioned-text.js";
 
 export interface PdfInspectorTextItemInput {
   readonly itemType: string;
@@ -41,7 +41,7 @@ type PdfInspectorOperation = "extraction" | "inspection";
 
 export function extractPositionedPdfText(
   pdfBytes: Uint8Array,
-): PositionedPdfText {
+): PositionedText {
   const pdfInspector = loadPdfInspector("extraction");
   let nativeItems: readonly PdfInspectorTextItemInput[];
 
@@ -81,8 +81,8 @@ export function classifyPdfForOcr(
 
 export function translatePdfInspectorTextItems(
   items: readonly PdfInspectorTextItemInput[],
-): PositionedPdfText {
-  const translatedItems: PositionedPdfTextItem[] = [];
+): PositionedText {
+  const translatedItems: PositionedTextItem[] = [];
 
   try {
     for (let sourceIndex = 0; sourceIndex < items.length; sourceIndex += 1) {
