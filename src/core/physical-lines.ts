@@ -4,6 +4,7 @@ import type {
   PositionedTextFont,
   PositionedTextItem,
   PositionedTextStyle,
+  SourceMethod,
 } from "./positioned-text.js";
 
 export interface PhysicalText {
@@ -21,7 +22,7 @@ export interface PhysicalTextSpan {
   readonly start: number;
   readonly end: number;
   readonly sourceIndex: number;
-  readonly sourceMethod: "embedded-text";
+  readonly sourceMethod: SourceMethod;
   readonly bounds: PositionedTextBounds;
   readonly font: PositionedTextFont;
   readonly style: PositionedTextStyle;

@@ -1,10 +1,12 @@
+export type SourceMethod = "embedded-text" | "ocr";
+
 export interface PositionedText {
   readonly items: readonly PositionedTextItem[];
 }
 
 export interface PositionedTextItem {
   readonly sourceIndex: number;
-  readonly sourceMethod: "embedded-text";
+  readonly sourceMethod: SourceMethod;
   readonly pageIndex: number;
   readonly text: string;
   readonly bounds: PositionedTextBounds;
