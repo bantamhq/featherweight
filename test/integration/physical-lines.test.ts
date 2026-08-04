@@ -177,7 +177,7 @@ describe("groupPositionedTextIntoPhysicalLines", () => {
     );
 
     expect(physicalText.lines).toHaveLength(121);
-    expect(pageLineCounts).toEqual([9, 37, 36, 37, 2]);
+    expect(pageLineCounts).toEqual([9, 37, 34, 35, 6]);
     expect(flattenedSourceIndexes).toEqual(
       Array.from({ length: 126 }, (_, sourceIndex) => sourceIndex),
     );

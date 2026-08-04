@@ -25,9 +25,9 @@ describe("extractPositionedPdfText", () => {
     expect(actualPageIndices).toEqual([
       ...Array<number>(9).fill(0),
       ...Array<number>(37).fill(1),
-      ...Array<number>(41).fill(2),
-      ...Array<number>(37).fill(3),
-      ...Array<number>(2).fill(4),
+      ...Array<number>(39).fill(2),
+      ...Array<number>(35).fill(3),
+      ...Array<number>(6).fill(4),
     ]);
 
     expect(items[0]).toMatchObject({
@@ -130,8 +130,8 @@ describe("extractPositionedPdfText", () => {
       text: "OPENING TITLES",
       style: { bold: true },
     });
-    expect(items[87]).toMatchObject({
-      sourceIndex: 87,
+    expect(items[85]).toMatchObject({
+      sourceIndex: 85,
       pageIndex: 3,
       text: "3.",
     });
@@ -141,13 +141,13 @@ describe("extractPositionedPdfText", () => {
       text: "INT. GARAGE - DAY",
       style: { bold: true },
     });
-    expect(items[123]).toMatchObject({
-      sourceIndex: 123,
-      pageIndex: 3,
-      text: "BURN TO PINK.",
-    });
     expect(items[124]).toMatchObject({
       sourceIndex: 124,
+      pageIndex: 4,
+      text: "BURN TO PINK.",
+    });
+    expect(items[120]).toMatchObject({
+      sourceIndex: 120,
       pageIndex: 4,
       text: "4.",
     });

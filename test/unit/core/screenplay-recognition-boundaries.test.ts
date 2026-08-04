@@ -1,0 +1,393 @@
+import { describe, expect, it } from "vitest";
+
+import type { ScreenplayLayout } from "../../../src/core/layout/screenplay-layout.js";
+import type { NormalizedText } from "../../../src/core/normalized-text.js";
+import type { PhysicalTextLine } from "../../../src/core/physical-lines.js";
+import type { TextStyle } from "../../../src/core/screenplay-document.js";
+import { recognizeScreenplay } from "../../../src/core/recognition/recognize-screenplay.js";
+import {
+  action,
+  run,
+  scene,
+  styled,
+  titleField,
+} from "../../fixtures/semantic/document-builders.js";
+
+interface OwnedLine {
+  readonly text: string;
+  readonly x: number;
+  readonly y: number;
+  readonly width?: number;
+  readonly styles?: readonly TextStyle[];
+}
+
+interface OwnedPage {
+  readonly pageIndex: number;
+  readonly lines: readonly OwnedLine[];
+}
+
+const establishedLayout: ScreenplayLayout = {
+  action: { alignment: "left", x: 108 },
+  characterCue: { alignment: "left", x: 252 },
+  dialogue: { alignment: "left", x: 180 },
+  parenthetical: { alignment: "left", x: 216 },
+  transition: { alignment: "right", x: 540 },
+  dualDialogue: null,
+  diagnostics: [],
+};
+
+function createPhysicalLine(
+  line: OwnedLine,
+  pageIndex: number,
+  sourceIndex: number,
+): PhysicalTextLine {
+  const bounds = {
+    x: line.x,
+    y: line.y,
+    width: line.width ?? line.text.length * 7.2,
+    height: 12,
+  };
+  const styles = line.styles ?? [];
+
+  return {
+    pageIndex,
+    text: line.text,
+    bounds,
+    spans: [
+      {
+        start: 0,
+        end: line.text.length,
+        sourceIndex,
+        sourceMethod: "embedded-text",
+        bounds,
+        font: { name: "Courier Prime", size: 12 },
+        style: {
+          bold: styles.includes("bold"),
+          italic: styles.includes("italic"),
+          underline: styles.includes("underline"),
+          strikeout: styles.includes("strikeout"),
+        },
+      },
+    ],
+  };
+}
+
+function normalizedText(pages: readonly OwnedPage[]): NormalizedText {
+  let sourceIndex = 0;
+
+  return {
+    pages: pages.map((page) => ({
+      pageIndex: page.pageIndex,
+      lines: page.lines.map((line) =>
+        createPhysicalLine(line, page.pageIndex, sourceIndex++),
+      ),
+    })),
+    suppressed: [],
+    diagnostics: [],
+  };
+}
+
+describe("recognizeScreenplay evidence boundaries", () => {
+  it("recognizes supported conventional title geometry and otherwise falls back to body Action", () => {
+    const unsupportedInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "First retained value", x: 234, y: 700, width: 144 },
+          { text: "Second retained value", x: 234, y: 652, width: 144 },
+          { text: "Third retained value", x: 234, y: 616, width: 144 },
+          { text: "Fourth retained value", x: 396, y: 556, width: 144 },
+          { text: "Fifth retained value", x: 72, y: 300 },
+          { text: "Sixth retained value", x: 72, y: 276 },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "INT. SUPPORTED BODY - DAY",
+            x: 108,
+            y: 700,
+            styles: ["bold"],
+          },
+        ],
+      },
+    ]);
+
+    const alternateConventionalInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "PRIMARY TITLE",
+            x: 252,
+            y: 700,
+            width: 108,
+            styles: ["bold", "underline"],
+          },
+          {
+            text: "SECOND TITLE",
+            x: 252,
+            y: 688,
+            width: 108,
+            styles: ["bold", "underline"],
+          },
+          { text: "Prepared by", x: 270, y: 652, width: 72 },
+          { text: "Writer Name", x: 264, y: 628, width: 84 },
+          { text: "Source Material", x: 252, y: 592, width: 108 },
+          { text: "2026-08-04", x: 90, y: 300, width: 72 },
+          { text: "Production Office", x: 90, y: 276, width: 120 },
+          { text: "123 Example Street", x: 90, y: 264, width: 132 },
+          { text: "Example City", x: 90, y: 252, width: 84 },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "INT. SUPPORTED BODY - DAY",
+            x: 108,
+            y: 700,
+            styles: ["bold"],
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(unsupportedInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("First retained value"),
+        action("Second retained value"),
+        action("Third retained value"),
+        action("Fourth retained value"),
+        action("Fifth retained value"),
+        action("Sixth retained value"),
+        scene("INT. SUPPORTED BODY - DAY"),
+      ],
+    });
+    expect(
+      recognizeScreenplay(alternateConventionalInput, establishedLayout),
+    ).toEqual({
+      titlePage: [
+        {
+          key: "Title",
+          values: [
+            styled(run("PRIMARY TITLE", ["bold", "underline"])),
+            styled(run("SECOND TITLE", ["bold", "underline"])),
+          ],
+        },
+        titleField("Credit", "Prepared by"),
+        titleField("Author", "Writer Name"),
+        titleField("Source", "Source Material"),
+        titleField("Draft date", "2026-08-04"),
+        titleField(
+          "Contact",
+          "Production Office",
+          "123 Example Street",
+          "Example City",
+        ),
+      ],
+      elements: [scene("INT. SUPPORTED BODY - DAY")],
+    });
+  });
+
+  it("joins only evidence-supported Action continuation across a physical page boundary", () => {
+    const continuousInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "A continuous Action line reaches the physical page edge and",
+            x: 108,
+            y: 36,
+            width: 396,
+          },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "continues without a paragraph break.",
+            x: 108,
+            y: 720,
+            width: 252,
+          },
+        ],
+      },
+    ]);
+    const separateInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "A complete Action paragraph ends at the page edge.",
+            x: 108,
+            y: 36,
+            width: 396,
+          },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "A separate Action paragraph begins on the next page.",
+            x: 108,
+            y: 720,
+            width: 360,
+          },
+        ],
+      },
+    ]);
+    const dashContinuousInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "An earlier complete Action paragraph.",
+            x: 108,
+            y: 100,
+            width: 396,
+          },
+          {
+            text: "A short continuing fragment -",
+            x: 108,
+            y: 36,
+            width: 120,
+          },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "- resumes at the next retained page edge.",
+            x: 108,
+            y: 720,
+            width: 300,
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(continuousInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action(
+          "A continuous Action line reaches the physical page edge and continues without a paragraph break.",
+        ),
+      ],
+    });
+    expect(recognizeScreenplay(separateInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("A complete Action paragraph ends at the page edge."),
+        action("A separate Action paragraph begins on the next page."),
+      ],
+    });
+    expect(recognizeScreenplay(dashContinuousInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("An earlier complete Action paragraph."),
+        action(
+          "A short continuing fragment -- resumes at the next retained page edge.",
+        ),
+      ],
+    });
+  });
+
+  it("uses the document sentence-spacing convention only at physical-wrap joins", () => {
+    const oneSpaceInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "Observable sentence. Next sentence.",
+            x: 108,
+            y: 700,
+            width: 396,
+          },
+          {
+            text: "Sentence. ",
+            x: 108,
+            y: 676,
+            width: 180,
+            styles: ["bold"],
+          },
+          {
+            text: "Next line.",
+            x: 108,
+            y: 664,
+            width: 120,
+          },
+        ],
+      },
+    ]);
+    const twoSpaceInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "Observable sentence.  Next sentence.",
+            x: 108,
+            y: 700,
+            width: 396,
+          },
+          {
+            text: "Sentence. ",
+            x: 108,
+            y: 676,
+            width: 180,
+            styles: ["bold"],
+          },
+          {
+            text: "Next line.",
+            x: 108,
+            y: 664,
+            width: 120,
+          },
+          {
+            text: "Use e.g. ",
+            x: 108,
+            y: 640,
+            width: 180,
+          },
+          {
+            text: "an example.",
+            x: 108,
+            y: 628,
+            width: 120,
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(oneSpaceInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("Observable sentence. Next sentence."),
+        action(
+          styled(
+            run("Sentence. ", ["bold"]),
+            run("Next line."),
+          ),
+        ),
+      ],
+    });
+    expect(recognizeScreenplay(twoSpaceInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("Observable sentence.  Next sentence."),
+        action(
+          styled(
+            run("Sentence. ", ["bold"]),
+            run(" Next line."),
+          ),
+        ),
+        action("Use e.g. an example."),
+      ],
+    });
+  });
+});
