@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { extractPositionedPdfText } from "../pdf/extraction/pdf-inspector.js";
 import { positionedTextToPages } from "../screenplay/positioned-text-pages.js";
 import {
+  screenplayToFDX,
   screenplayToFountain,
   screenplayToJSON,
 } from "../screenplay/screenplay-conversion.js";
@@ -73,9 +74,14 @@ export async function runCli(
 
   try {
     const nativePages = positionedTextToPages(positionedText);
-    artifact = command.format === "json"
-      ? screenplayToJSON(nativePages, [])
-      : screenplayToFountain(nativePages, []);
+
+    if (command.format === "json") {
+      artifact = screenplayToJSON(nativePages, []);
+    } else if (command.format === "fdx") {
+      artifact = screenplayToFDX(nativePages, []);
+    } else {
+      artifact = screenplayToFountain(nativePages, []);
+    }
   } catch {
     return reportError(runtime, conversionErrorMessage, 1);
   }

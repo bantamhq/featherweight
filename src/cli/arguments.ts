@@ -1,4 +1,4 @@
-export type OutputFormat = "fountain" | "json";
+export type OutputFormat = "fountain" | "json" | "fdx";
 
 export type CliCommand =
   | { readonly kind: "help"; readonly output: string }
@@ -15,12 +15,12 @@ export const usageErrorMessage =
   "featherweight: Invalid arguments. Run 'featherweight --help' for usage.\n";
 
 const helpText =
-  "Usage: featherweight <input.pdf> [--format fountain|json] [--output <path>]\n" +
+  "Usage: featherweight <input.pdf> [--format fountain|json|fdx] [--output <path>]\n" +
   "\n" +
   "Convert a PDF screenplay using native embedded text.\n" +
   "\n" +
   "Options:\n" +
-  "  --format <fountain|json>  Output format; Fountain is the default.\n" +
+  "  --format <fountain|json|fdx>  Output format; Fountain is the default.\n" +
   "  --output <path>          Write output to a file instead of stdout.\n" +
   "  --help                   Show help.\n" +
   "  --version                Show version.\n";
@@ -57,7 +57,7 @@ export function parseArguments(
 
       const value = arguments_[argumentIndex + 1];
 
-      if (value !== "fountain" && value !== "json") {
+      if (value !== "fountain" && value !== "json" && value !== "fdx") {
         return { kind: "usage-error" };
       }
 

@@ -11,8 +11,10 @@ embedded text. Fountain is written to stdout by default.
 featherweight screenplay.pdf
 featherweight screenplay.pdf --format fountain
 featherweight screenplay.pdf --format json
+featherweight screenplay.pdf --format fdx
 featherweight screenplay.pdf --output screenplay.fountain
 featherweight screenplay.pdf --format json --output screenplay.json
+featherweight screenplay.pdf --format fdx --output screenplay.fdx
 ```
 
 `--output` overwrites an existing destination. The input and output must not
@@ -22,9 +24,9 @@ destination's extension. Successful file output writes nothing to stdout or
 stderr.
 
 This command does not inspect pages or perform OCR. A PDF with no embedded text
-successfully produces empty Fountain or an empty screenplay JSON document,
-without an OCR warning. The command does not accept stdin, short options, or
-FDX output.
+successfully produces empty Fountain, an empty screenplay JSON document, or a
+valid FDX document with empty content, without an OCR warning. The command does
+not accept stdin or short options.
 
 Use `featherweight --help` for supported syntax and `featherweight --version`
 for the installed package version. Invalid arguments exit with status 2.
@@ -34,12 +36,13 @@ concise diagnostic on stderr. Successful commands exit with status 0.
 ## Screenplay conversion
 
 Featherweight converts caller-routed native and OCR positioned pages into
-canonical screenplay JSON or Fountain. Both conversions are synchronous and do
-not mutate their inputs.
+canonical screenplay JSON or Fountain, or into a minimal FDX compatibility
+document. All conversions are synchronous and do not mutate their inputs.
 
 ```ts
 import {
   inspectScreenplayPdf,
+  screenplayToFDX,
   screenplayToFountain,
   screenplayToJSON,
   type PositionedTextPage,
@@ -86,6 +89,7 @@ const ocrPages: PositionedTextPage[] = [
 if (inspection.pagesNeedingOcr.includes(1)) {
   const json = screenplayToJSON(nativePages, ocrPages);
   const fountain = screenplayToFountain(nativePages, ocrPages);
+  const fdx = screenplayToFDX(nativePages, ocrPages);
 }
 ```
 
@@ -98,4 +102,6 @@ page recognition.
 
 JSON output uses two-space indentation and exactly one final line feed. Fountain
 output uses the same recognized screenplay document and the package's canonical
-Fountain serialization.
+Fountain serialization. FDX is a convenience export from that recognized
+semantic document. It preserves supported screenplay content and styling but
+does not reconstruct source PDF layout or Final Draft editor settings.

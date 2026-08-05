@@ -89,6 +89,7 @@ describe("inspectScreenplayPdf", () => {
       "PdfInspectionError",
       "ScreenplayConversionError",
       "inspectScreenplayPdf",
+      "screenplayToFDX",
       "screenplayToFountain",
       "screenplayToJSON",
     ]);

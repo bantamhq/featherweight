@@ -7,6 +7,7 @@ import type {
 } from "../core/positioned-text.js";
 import { recognizeScreenplay } from "../core/recognition/recognize-screenplay.js";
 import type { ScreenplayDocument } from "../core/screenplay-document.js";
+import { screenplayDocumentToFDX } from "../fdx/screenplay-document-to-fdx.js";
 import { screenplayDocumentToFountain } from "../fountain/screenplay-document-to-fountain.js";
 import { normalizePhysicalText } from "../pdf/normalization/physical-text.js";
 import { ScreenplayConversionError } from "./screenplay-conversion-error.js";
@@ -42,6 +43,15 @@ export function screenplayToFountain(
   const document = createScreenplayDocument(nativePages, ocrPages);
 
   return screenplayDocumentToFountain(document);
+}
+
+export function screenplayToFDX(
+  nativePages: readonly PositionedTextPage[],
+  ocrPages: readonly PositionedTextPage[],
+): string {
+  const document = createScreenplayDocument(nativePages, ocrPages);
+
+  return screenplayDocumentToFDX(document);
 }
 
 function createScreenplayDocument(

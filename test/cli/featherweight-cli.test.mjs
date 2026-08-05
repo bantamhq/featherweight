@@ -17,6 +17,13 @@ import { fileURLToPath } from "node:url";
 import { after, before, test } from "node:test";
 import { spawnSync } from "node:child_process";
 
+import {
+  elementChildren,
+  firstElement,
+  parseFdxDocument,
+  projectFdxDocument,
+} from "../support/fdx-document.ts";
+
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const inputPdf = join(repositoryRoot, "test", "brick-and-steel.pdf");
 const scannedInputPdf = join(
@@ -38,6 +45,13 @@ const jsonFixture = join(
   "cli",
   "brick-and-steel.expected.json",
 );
+const fdxFixture = join(
+  repositoryRoot,
+  "test",
+  "fixtures",
+  "fdx",
+  "brick-and-steel.expected.fdx",
+);
 const usageError =
   "featherweight: Invalid arguments. Run 'featherweight --help' for usage.\n";
 const readError = "featherweight: Unable to read input PDF.\n";
@@ -57,6 +71,7 @@ let caseRoot;
 let executablePath;
 let expectedFountain;
 let expectedJson;
+let expectedFdxProjection;
 let packageVersion;
 
 before(() => {
@@ -131,6 +146,9 @@ before(() => {
   expectedJson =
     JSON.stringify(JSON.parse(readFileSync(jsonFixture, "utf8")), null, 2) +
     "\n";
+  expectedFdxProjection = projectFdxDocument(
+    parseFdxDocument(readFileSync(fdxFixture, "utf8")),
+  );
 });
 
 after(() => {
@@ -173,6 +191,26 @@ test("emits exact reviewed JSON and exact native-empty artifacts to stdout", () 
   });
 });
 
+test("emits reviewed FDX and a valid native-empty FDX document to stdout", () => {
+  const result = runCli([inputPdf, "--format", "fdx"]);
+
+  assertExecutionSucceeded(result);
+  assert.deepEqual(
+    projectFdxDocument(parseFdxDocument(result.stdout)),
+    expectedFdxProjection,
+  );
+
+  const emptyResult = runCli([scannedInputPdf, "--format", "fdx"]);
+
+  assertExecutionSucceeded(emptyResult);
+  const emptyRoot = parseFdxDocument(emptyResult.stdout);
+  assert.deepEqual(
+    elementChildren(firstElement(emptyRoot, "Content"), "Paragraph"),
+    [],
+  );
+  assert.deepEqual(elementChildren(emptyRoot, "TitlePage"), []);
+});
+
 test("overwrites Fountain and JSON output files without altering the input", () => {
   const relativeWorkspace = "output files with spaces";
   const workspace = join(caseRoot, relativeWorkspace);
@@ -205,6 +243,26 @@ test("overwrites Fountain and JSON output files without altering the input", () 
   assert.equal(hashFile(copiedInput), inputHash);
 });
 
+test("overwrites an FDX output file without altering the input", () => {
+  const workspace = join(caseRoot, "fdx-output");
+  const copiedInput = join(workspace, "brick-and-steel.pdf");
+  const fdxOutput = join(workspace, "screenplay.fdx");
+  mkdirSync(workspace);
+  copyFileSync(inputPdf, copiedInput);
+  writeFileSync(fdxOutput, "old FDX content");
+  const inputHash = hashFile(copiedInput);
+
+  assertExecution(
+    runCli([copiedInput, "--format", "fdx", "--output", fdxOutput]),
+    { status: 0, stdout: "", stderr: "" },
+  );
+  assert.deepEqual(
+    projectFdxDocument(parseFdxDocument(readFileSync(fdxOutput, "utf8"))),
+    expectedFdxProjection,
+  );
+  assert.equal(hashFile(copiedInput), inputHash);
+});
+
 test("communicates help and returns exact version and usage process contracts", () => {
   const help = runCli(["--help"]);
   assert.deepEqual(
@@ -219,6 +277,7 @@ test("communicates help and returns exact version and usage process contracts", 
     "--help",
     "--version",
     "json",
+    "fdx",
   ]) {
     assert.equal(help.stdout.toLowerCase().includes(expectedHelpTerm), true);
   }
@@ -241,10 +300,11 @@ test("communicates help and returns exact version and usage process contracts", 
     ["-o", "result.fountain", inputPdf],
     ["-"],
     [inputPdf, "--format", "JSON"],
-    [inputPdf, "--format", "fdx"],
+    [inputPdf, "--format", "FDX"],
     [inputPdf, "--format"],
     [inputPdf, "--output"],
     [inputPdf, "--format", "json", "--format", "fountain"],
+    [inputPdf, "--format", "fdx", "--format", "json"],
     [inputPdf, "--output", "one", "--output", "two"],
     [],
     [inputPdf, "extra.pdf"],
@@ -331,6 +391,13 @@ function assertExecution(actual, expected) {
   assert.deepEqual(
     { status: actual.status, stdout: actual.stdout, stderr: actual.stderr },
     expected,
+  );
+}
+
+function assertExecutionSucceeded(actual) {
+  assert.deepEqual(
+    { status: actual.status, stderr: actual.stderr },
+    { status: 0, stderr: "" },
   );
 }
 
