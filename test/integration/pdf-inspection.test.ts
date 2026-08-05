@@ -67,6 +67,7 @@ describe("inspectScreenplayPdf", () => {
     expect(Object.keys(featherweight).sort()).toEqual([
       "PdfInspectionError",
       "inspectScreenplayPdf",
+      "screenplayToFountain",
     ]);
   });
 });
