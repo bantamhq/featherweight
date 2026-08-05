@@ -79,11 +79,17 @@ export function recognizeScreenplay(
     ),
   );
   const transitionLines = new Set(sequences.transitionLines);
+  const actionLineMeasure = inferActionLineMeasure(
+    recognitionLines,
+    layout,
+    coordinateTolerance,
+  );
   const sceneHeadings = findSceneHeadings(
     recognitionLines,
     sequences.reservedLines,
     layout,
     coordinateTolerance,
+    actionLineMeasure,
   );
   const sceneHeadingByLine = new Map(
     sceneHeadings.map(
@@ -103,14 +109,9 @@ export function recognizeScreenplay(
     ...[...sequences.reservedLines].filter(
       (line) => !transitionLines.has(line),
     ),
-    ...sceneHeadingByLine.keys(),
+    ...sceneHeadings.flatMap((evidence) => evidence.headingLines),
     ...sceneNumberFragments,
   ]);
-  const actionLineMeasure = inferActionLineMeasure(
-    recognitionLines,
-    layout,
-    coordinateTolerance,
-  );
   const dialogueLineMeasure = inferDialogueLineMeasure(
     recognitionLines,
     layout,
@@ -130,7 +131,7 @@ export function recognizeScreenplay(
     ...[...sequences.reservedLines].filter(
       (line) => !centeredTransitionLines.has(line),
     ),
-    ...sceneHeadingByLine.keys(),
+    ...sceneHeadings.flatMap((evidence) => evidence.headingLines),
     ...sceneNumberFragments,
   ]);
 
@@ -173,7 +174,7 @@ export function recognizeScreenplay(
     if (sceneHeading !== undefined) {
       elements.push(createSceneHeading(sceneHeading));
       addConsumedLines(consumedLines, [
-        sceneHeading.heading,
+        ...sceneHeading.headingLines,
         ...sceneHeading.numberFragments,
       ]);
       continue;

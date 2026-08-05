@@ -303,6 +303,44 @@ describe("recognizeScreenplay evidence boundaries", () => {
     });
   });
 
+  it("reconstructs a scene heading wrapped at the established Action measure", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "INT. GOLDEN GATE BRIDGE, MINUTES ",
+            x: 108,
+            y: 700,
+            width: 396,
+            styles: ["bold"],
+          },
+          {
+            text: "LATER",
+            x: 108,
+            y: 688,
+            width: 36,
+            styles: ["bold"],
+          },
+          {
+            text: "The car crosses the bridge.",
+            x: 108,
+            y: 664,
+            width: 190,
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        scene("INT. GOLDEN GATE BRIDGE, MINUTES LATER"),
+        action("The car crosses the bridge."),
+      ],
+    });
+  });
+
   it("preserves deliberate short dialogue lines while joining ordinary PDF wraps", () => {
     const input = normalizedText([
       {

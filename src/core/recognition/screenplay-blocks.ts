@@ -20,6 +20,7 @@ export interface TitlePageExtraction {
 
 export interface SceneHeadingEvidence {
   readonly heading: PhysicalTextLine;
+  readonly headingLines: readonly PhysicalTextLine[];
   readonly numberFragments: readonly PhysicalTextLine[];
   readonly sceneNumber: string | null;
 }
@@ -31,6 +32,10 @@ export interface ActionLineGroup {
 }
 
 const conventionalSceneHeading = /^(?:INT\.|EXT\.|INT\/EXT\.|I\/E\.|EST\.)/u;
+const conventionalCredit =
+  /^(?:written|prepared|screenplay|teleplay)\s+(?:by|for)$/iu;
+const draftDate = /^\d{1,4}[./-]\d{1,2}[./-]\d{1,4}$/u;
+const copyrightNotice = /^(?:copyright\b|©|\(c\))/iu;
 
 export function extractTitlePage(
   lines: readonly PhysicalTextLine[],
@@ -52,11 +57,8 @@ export function extractTitlePage(
   const firstPageLines = lines.filter((line) => line.pageIndex === firstPageIndex);
   const bodyLines = lines.filter((line) => line.pageIndex !== firstPageIndex);
   const isSeparateTitlePage =
-    firstPageLines.length >= 6 &&
+    firstPageLines.length > 0 &&
     bodyLines.length > 0 &&
-    firstPageLines.every(
-      (line) => Math.abs(line.bounds.x - actionX) > coordinateTolerance,
-    ) &&
     bodyLines.some((line) =>
       isSceneHeadingLine(line, layout, coordinateTolerance),
     );
@@ -85,96 +87,207 @@ function recognizeConventionalTitlePage(
   lines: readonly PhysicalTextLine[],
   coordinateTolerance: number,
 ): readonly TitlePageField[] | null {
-  let titleValueCount = 1;
-
-  while (
-    titleValueCount < lines.length &&
-    areVerticallyAdjacent(
-      lines[titleValueCount - 1]!,
-      lines[titleValueCount]!,
-      1.5,
-    ) &&
-    haveMatchingCenters(
-      lines[titleValueCount - 1]!,
-      lines[titleValueCount]!,
-      coordinateTolerance,
-    )
-  ) {
-    titleValueCount += 1;
-  }
-
-  const titleValues = lines.slice(0, titleValueCount);
-  const remainingLines = lines.slice(titleValueCount);
-
-  if (remainingLines.length < 5) {
-    return null;
-  }
-
-  const credit = remainingLines[0]!;
-  const author = remainingLines[1]!;
-  const source = remainingLines[2]!;
-  const draftDate = remainingLines[3]!;
-  const contact = remainingLines.slice(4);
-  const centeredUpperLines = [...titleValues, credit, author, source];
-  const hasConventionalUpperGeometry =
-    centeredUpperLines.every((line) =>
-      haveMatchingCenters(
-        centeredUpperLines[0]!,
-        line,
-        coordinateTolerance,
-      ),
-    ) &&
-    hasOneOfRelativeVerticalGaps(titleValues.at(-1)!, credit, [3, 4]) &&
-    hasRelativeVerticalGap(credit, author, 2) &&
-    hasOneOfRelativeVerticalGaps(author, source, [3, 5]);
-  const footerLines = [draftDate, ...contact];
-  const footerOriginTolerance = Math.max(
+  const footerStartIndex = findTitleFooterStartIndex(lines);
+  const upperLines = lines.slice(0, footerStartIndex);
+  const footerLines = lines.slice(footerStartIndex);
+  const upperFields = recognizeUpperTitleFields(
+    upperLines,
     coordinateTolerance,
-    draftDate.bounds.height / 2,
   );
-  const hasConventionalFooterGeometry =
-    footerLines.every(
-      (line) =>
-        Math.abs(line.bounds.x - draftDate.bounds.x) <=
-        footerOriginTolerance,
-    ) &&
-    verticalGapInLineHeights(draftDate, contact[0]!) >= 0.75 &&
-    verticalGapInLineHeights(draftDate, contact[0]!) <= 2.5 &&
-    contact.slice(1).every((line, index) =>
-      areVerticallyAdjacent(contact[index]!, line, 1.5),
-    );
-
-  const independentFooter = recognizeIndependentFooter(
+  let footerFields = recognizeFooterTitleFields(
     footerLines,
     coordinateTolerance,
   );
 
   if (
-    !hasConventionalUpperGeometry ||
-    (!hasConventionalFooterGeometry && independentFooter === null)
+    upperFields.length === 0 &&
+    footerFields.length === 0 &&
+    footerStartIndex === lines.length
   ) {
-    return null;
+    footerFields = recognizeFooterTitleFields(lines, coordinateTolerance);
   }
+
+  const fields = [...upperFields, ...footerFields];
+
+  return fields.length > 0 ? fields : null;
+}
+
+function findTitleFooterStartIndex(
+  lines: readonly PhysicalTextLine[],
+): number {
+  let largestGap = 0;
+  let footerStartIndex = lines.length;
+
+  for (let index = 1; index < lines.length; index += 1) {
+    const gap = verticalGapInLineHeights(lines[index - 1]!, lines[index]!);
+
+    if (gap >= 6 && gap > largestGap) {
+      largestGap = gap;
+      footerStartIndex = index;
+    }
+  }
+
+  if (
+    footerStartIndex === lines.length &&
+    (draftDate.test(lines[0]!.text.trim()) ||
+      copyrightNotice.test(lines[0]!.text.trim()))
+  ) {
+    return 0;
+  }
+
+  return footerStartIndex;
+}
+
+function recognizeUpperTitleFields(
+  lines: readonly PhysicalTextLine[],
+  coordinateTolerance: number,
+): readonly TitlePageField[] {
+  if (
+    lines.length === 0 ||
+    !lines.every((line) =>
+      haveMatchingCenters(lines[0]!, line, coordinateTolerance),
+    )
+  ) {
+    return [];
+  }
+
+  const creditIndex = lines.findIndex((line) =>
+    conventionalCredit.test(line.text.trim()),
+  );
+
+  if (creditIndex < 0) {
+    let titleValueCount = 1;
+
+    while (
+      titleValueCount < lines.length &&
+      areVerticallyAdjacent(
+        lines[titleValueCount - 1]!,
+        lines[titleValueCount]!,
+        1.5,
+      )
+    ) {
+      titleValueCount += 1;
+    }
+
+    return [createTitleField("Title", lines.slice(0, titleValueCount))];
+  }
+
+  const fields: TitlePageField[] = [];
+  const titleValues = lines.slice(0, creditIndex);
+  const credit = lines[creditIndex]!;
+  const possibleAuthor = lines[creditIndex + 1];
+  const hasAuthor =
+    possibleAuthor !== undefined &&
+    verticalGapInLineHeights(credit, possibleAuthor) <= 2.5;
+  const sourceStartIndex = creditIndex + (hasAuthor ? 2 : 1);
+  const source = lines.slice(sourceStartIndex);
+
+  if (titleValues.length > 0) {
+    fields.push(createTitleField("Title", titleValues));
+  }
+
+  fields.push(createTitleField("Credit", [credit]));
+
+  if (hasAuthor) {
+    fields.push(createTitleField("Author", [possibleAuthor]));
+  }
+
+  if (source.length > 0) {
+    fields.push(createTitleField("Source", source));
+  }
+
+  return fields;
+}
+
+function recognizeFooterTitleFields(
+  lines: readonly PhysicalTextLine[],
+  coordinateTolerance: number,
+): readonly TitlePageField[] {
+  if (lines.length === 0) {
+    return [];
+  }
+
+  const independentFooter = recognizeIndependentFooter(
+    lines,
+    coordinateTolerance,
+  );
 
   if (independentFooter !== null) {
     return [
-      createTitleField("Title", titleValues),
-      createTitleField("Credit", [credit]),
-      createTitleField("Author", [author]),
-      createTitleField("Source", [source]),
       createTitleField("Notes", independentFooter.notes),
       createTitleField("Copyright", [independentFooter.copyright]),
     ];
   }
 
-  return [
-    createTitleField("Title", titleValues),
-    createTitleField("Credit", [credit]),
-    createTitleField("Author", [author]),
-    createTitleField("Source", [source]),
-    createTitleField("Draft date", [draftDate]),
-    createTitleField("Contact", contact),
-  ];
+  const fields: TitlePageField[] = [];
+  const copyrightIndex = lines.findIndex((line) =>
+    copyrightNotice.test(line.text.trim()),
+  );
+  const copyright =
+    copyrightIndex < 0 ? undefined : lines[copyrightIndex];
+  const conventionalLines = lines.filter((_, index) => index !== copyrightIndex);
+  const hasDraftDate = draftDate.test(conventionalLines[0]?.text.trim() ?? "");
+  const contactCandidate = conventionalLines.slice(hasDraftDate ? 1 : 0);
+  const originTolerance = Math.max(
+    coordinateTolerance,
+    conventionalLines[0]?.bounds.height ?? 0,
+  );
+  const hasMatchingOrigins = contactCandidate.every(
+    (line) =>
+      Math.abs(line.bounds.x - contactCandidate[0]!.bounds.x) <=
+      originTolerance,
+  );
+  const hasMatchingRightEdges = contactCandidate.every(
+    (line) =>
+      Math.abs(
+        line.bounds.x +
+          line.bounds.width -
+          (contactCandidate[0]!.bounds.x + contactCandidate[0]!.bounds.width),
+      ) <= originTolerance,
+  );
+  const hasAdjacentContactLines = contactCandidate
+    .slice(1)
+    .every((line, index) =>
+      areVerticallyAdjacent(contactCandidate[index]!, line, 1.5),
+    );
+  const hasSupportedContactGeometry = hasDraftDate
+    ? contactCandidate.length === 0 ||
+      (verticalGapInLineHeights(
+        conventionalLines[0]!,
+        contactCandidate[0]!,
+      ) >= 0.75 &&
+        verticalGapInLineHeights(
+          conventionalLines[0]!,
+          contactCandidate[0]!,
+        ) <= 2.5 &&
+        hasMatchingOrigins &&
+        hasAdjacentContactLines)
+    : contactCandidate.length > 1 &&
+      hasMatchingOrigins &&
+      hasAdjacentContactLines;
+  const contact = hasSupportedContactGeometry ? contactCandidate : [];
+
+  if (hasDraftDate) {
+    fields.push(createTitleField("Draft date", [conventionalLines[0]!]));
+  }
+
+  if (contact.length > 0) {
+    fields.push(createTitleField("Contact", contact));
+  } else if (
+    !hasDraftDate &&
+    copyright === undefined &&
+    contactCandidate.length > 1 &&
+    hasMatchingRightEdges &&
+    hasAdjacentContactLines
+  ) {
+    fields.push(createTitleField("Notes", contactCandidate));
+  }
+
+  if (copyright !== undefined) {
+    fields.push(createTitleField("Copyright", [copyright]));
+  }
+
+  return fields;
 }
 
 function recognizeIndependentFooter(
@@ -220,15 +333,36 @@ export function findSceneHeadings(
   reservedLines: ReadonlySet<PhysicalTextLine>,
   layout: ScreenplayLayout,
   coordinateTolerance: number,
+  actionLineMeasure: number | null,
 ): readonly SceneHeadingEvidence[] {
   const headings: SceneHeadingEvidence[] = [];
+  const consumedContinuationLines = new Set<PhysicalTextLine>();
 
-  for (const heading of lines) {
+  for (const [headingIndex, heading] of lines.entries()) {
     if (
       reservedLines.has(heading) ||
+      consumedContinuationLines.has(heading) ||
       !isSceneHeadingLine(heading, layout, coordinateTolerance)
     ) {
       continue;
+    }
+
+    const continuation = lines[headingIndex + 1];
+    const headingLines =
+      continuation !== undefined &&
+      isWrappedSceneHeadingContinuation(
+        heading,
+        continuation,
+        reservedLines,
+        layout,
+        coordinateTolerance,
+        actionLineMeasure,
+      )
+        ? [heading, continuation]
+        : [heading];
+
+    if (headingLines.length > 1) {
+      consumedContinuationLines.add(headingLines[1]!);
     }
 
     const baselineFragments = lines.filter(
@@ -252,6 +386,7 @@ export function findSceneHeadings(
 
     headings.push({
       heading,
+      headingLines,
       numberFragments:
         sceneNumber === undefined ? [] : [sceneNumber.left, sceneNumber.right],
       sceneNumber: sceneNumber?.number ?? null,
@@ -266,9 +401,38 @@ export function createSceneHeading(
 ): SceneHeading {
   return {
     type: "scene-heading",
-    text: createStyledText([evidence.heading]),
+    text: createStyledText(evidence.headingLines),
     sceneNumber: evidence.sceneNumber,
   };
+}
+
+function isWrappedSceneHeadingContinuation(
+  heading: PhysicalTextLine,
+  continuation: PhysicalTextLine,
+  reservedLines: ReadonlySet<PhysicalTextLine>,
+  layout: ScreenplayLayout,
+  coordinateTolerance: number,
+  actionLineMeasure: number | null,
+): boolean {
+  if (
+    actionLineMeasure === null ||
+    reservedLines.has(continuation) ||
+    continuation.pageIndex !== heading.pageIndex ||
+    !areVerticallyAdjacent(heading, continuation, 1.5) ||
+    layout.action === null ||
+    Math.abs(continuation.bounds.x - layout.action.x) > coordinateTolerance ||
+    heading.bounds.width + heading.bounds.height * 5 < actionLineMeasure
+  ) {
+    return false;
+  }
+
+  const continuationText = continuation.text.trim();
+
+  return (
+    isUppercaseText(continuationText) &&
+    continuation.spans.length > 0 &&
+    continuation.spans.every((span) => span.style.bold)
+  );
 }
 
 export function collectActionLines(options: {
@@ -936,27 +1100,6 @@ function haveMatchingCenters(
   );
 
   return Math.abs(lineCenter(left) - lineCenter(right)) <= tolerance;
-}
-
-function hasRelativeVerticalGap(
-  upper: PhysicalTextLine,
-  lower: PhysicalTextLine,
-  expectedLineHeights: number,
-): boolean {
-  return (
-    Math.abs(verticalGapInLineHeights(upper, lower) - expectedLineHeights) <=
-    0.5
-  );
-}
-
-function hasOneOfRelativeVerticalGaps(
-  upper: PhysicalTextLine,
-  lower: PhysicalTextLine,
-  expectedLineHeights: readonly number[],
-): boolean {
-  return expectedLineHeights.some((expected) =>
-    hasRelativeVerticalGap(upper, lower, expected),
-  );
 }
 
 function verticalGapInLineHeights(
