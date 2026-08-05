@@ -1,0 +1,1153 @@
+{
+  "titlePage": [
+    {
+      "key": "Title",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "BRICK & STEEL",
+              "styles": [
+                "bold",
+                "underline"
+              ]
+            }
+          ]
+        },
+        {
+          "runs": [
+            {
+              "text": "FULL RETIRED",
+              "styles": [
+                "bold",
+                "underline"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Credit",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "Written by",
+              "styles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Author",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "Stu Maschwitz",
+              "styles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Source",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "Story by KTM",
+              "styles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Draft date",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "1/27/2012",
+              "styles": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "Contact",
+      "values": [
+        {
+          "runs": [
+            {
+              "text": "Next Level Productions",
+              "styles": []
+            }
+          ]
+        },
+        {
+          "runs": [
+            {
+              "text": "1588 Mission Dr.",
+              "styles": []
+            }
+          ]
+        },
+        {
+          "runs": [
+            {
+              "text": "Solvang, CA 93463",
+              "styles": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "elements": [
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "EXT. BRICK'S PATIO - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "A gorgeous day.  The sun is shining.  But BRICK BRADDOCK, retired police detective, is sitting quietly, contemplating -- something.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "The SCREEN DOOR slides open and DICK STEEL, his former partner and fellow retiree, emerges with two cold beers.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Beer's ready!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Are they cold?",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Does a bear crap in the woods?",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Steel sits.  They laugh at the dumb joke.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(beer raised)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "To retirement.",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "To retirement.",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "They drink long and well from the beers.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "And then there's a long beat.\nLonger than is funny.\nLong enough to be depressing.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "The men look at each other.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "dual-dialogue",
+      "left": {
+        "character": {
+          "type": "character",
+          "text": {
+            "runs": [
+              {
+                "text": "STEEL",
+                "styles": []
+              }
+            ]
+          }
+        },
+        "content": [
+          {
+            "type": "dialogue",
+            "text": {
+              "runs": [
+                {
+                  "text": "Screw retirement.",
+                  "styles": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "right": {
+        "character": {
+          "type": "character",
+          "text": {
+            "runs": [
+              {
+                "text": "BRICK",
+                "styles": []
+              }
+            ]
+          }
+        },
+        "content": [
+          {
+            "type": "dialogue",
+            "text": {
+              "runs": [
+                {
+                  "text": "Screw retirement.",
+                  "styles": []
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "SMASH CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "INT. TRAILER HOME - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "This is the home of THE BOY BAND, AKA DAN and JACK.  They too are drinking beer, and counting the take from their last smash-and-grab.  Money, drugs, and ridiculous props are strewn about the table.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "JACK",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(in Vietnamese, subtitled)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Did you know Brick and Steel are retired?",
+            "styles": [
+              "italic"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "DAN",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Then let's retire them. ",
+            "styles": []
+          },
+          {
+            "text": "Permanently",
+            "styles": [
+              "underline"
+            ]
+          },
+          {
+            "text": ".",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Jack begins to argue vociferously in Vietnamese (?), But mercifully we...",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "EXT. BRICK'S POOL - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Steel, in the middle of a heated phone call:",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "They're coming out of the woodwork!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(pause)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "No, everybody we've put away!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(pause)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Point Blank Sniper?",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "SNIPER SCOPE POV",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "From what seems like only INCHES AWAY.  ",
+            "styles": []
+          },
+          {
+            "text": "Steel's face FILLS the ",
+            "styles": [
+              "underline"
+            ]
+          },
+          {
+            "text": "Leupold Mark 4",
+            "styles": [
+              "italic",
+              "underline"
+            ]
+          },
+          {
+            "text": " scope",
+            "styles": [
+              "underline"
+            ]
+          },
+          {
+            "text": ".",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "The man's a myth!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Steel turns and looks straight into the cross-hairs.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(oh crap)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Hello...",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "OPENING TITLES",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK BRADDOCK\n& DICK STEEL IN",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "center"
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK & STEEL\nFULL RETIRED",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "center"
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "SMASH CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "EXT. WOODEN SHACK - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "COGNITO, the criminal mastermind, is SLAMMED against the wall.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "COGNITO",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Woah woah woah, Brick and Steel!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Sure enough, it's Brick and Steel, roughing up their favorite usual suspect.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "COGNITO",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "What is it you want with me, DICK?",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Steel SMACKS him.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Who's coming after us?",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "COGNITO",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "Everyone's coming after you mate!  Scorpio, The Boy Band, Sparrow, Point Blank Sniper...",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "As he rattles off the long list, Brick and Steel share a look.  This is going to be BAD.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "INT. GARAGE - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK and STEEL get into Mom's PORSCHE, Steel at the wheel.  They pause for a beat, the gravity of the situation catching up with them.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "BRICK",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "This is everybody we've ever put away.",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "STEEL",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "parenthetical",
+      "text": {
+        "runs": [
+          {
+            "text": "(starting the engine)",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "So much for retirement!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "They speed off.  To destiny!",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "CUT TO:",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "scene-heading",
+      "text": {
+        "runs": [
+          {
+            "text": "EXT. PALATIAL MANSION - DAY",
+            "styles": [
+              "bold"
+            ]
+          }
+        ]
+      },
+      "sceneNumber": null
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "An EXTREMELY HANDSOME MAN drinks a beer.  Shirtless, unfortunately.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "His minion approaches offscreen:",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "MINION",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "We found Brick and Steel!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "character",
+      "text": {
+        "runs": [
+          {
+            "text": "HANDSOME MAN",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "dialogue",
+      "text": {
+        "runs": [
+          {
+            "text": "I want them dead.  DEAD!",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "Beer flies.",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "standard"
+    },
+    {
+      "type": "transition",
+      "text": {
+        "runs": [
+          {
+            "text": "BURN TO PINK.",
+            "styles": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "text": {
+        "runs": [
+          {
+            "text": "THE END",
+            "styles": []
+          }
+        ]
+      },
+      "alignment": "center"
+    }
+  ]
+}

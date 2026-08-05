@@ -12,6 +12,7 @@ test("declares the supported package and contributor toolchain", async () => {
     type?: unknown;
     engines?: unknown;
     packageManager?: unknown;
+    bin?: unknown;
   };
 
   expect({
@@ -25,4 +26,10 @@ test("declares the supported package and contributor toolchain", async () => {
     engines: { node: ">=24" },
     packageManager: "pnpm@11.18.0",
   });
+  expect(packageManifest.bin).toEqual({
+    featherweight: expect.any(String),
+  });
+  expect(
+    (packageManifest.bin as { featherweight: string }).featherweight.length,
+  ).toBeGreaterThan(0);
 });

@@ -2,6 +2,35 @@
 
 PDF-to-screenplay semantic conversion for Node.js.
 
+## Command-line usage
+
+The `featherweight` command converts one local PDF using only its native
+embedded text. Fountain is written to stdout by default.
+
+```sh
+featherweight screenplay.pdf
+featherweight screenplay.pdf --format fountain
+featherweight screenplay.pdf --format json
+featherweight screenplay.pdf --output screenplay.fountain
+featherweight screenplay.pdf --format json --output screenplay.json
+```
+
+`--output` overwrites an existing destination. The input and output must not
+resolve to the same absolute path, and the output's parent directory must
+already exist. The output format is selected only by `--format`, not by the
+destination's extension. Successful file output writes nothing to stdout or
+stderr.
+
+This command does not inspect pages or perform OCR. A PDF with no embedded text
+successfully produces empty Fountain or an empty screenplay JSON document,
+without an OCR warning. The command does not accept stdin, short options, or
+FDX output.
+
+Use `featherweight --help` for supported syntax and `featherweight --version`
+for the installed package version. Invalid arguments exit with status 2.
+Input, extraction, conversion, and output failures exit with status 1 and a
+concise diagnostic on stderr. Successful commands exit with status 0.
+
 ## Screenplay conversion
 
 Featherweight converts caller-routed native and OCR positioned pages into
