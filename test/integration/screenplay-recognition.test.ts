@@ -6,7 +6,7 @@ import { inferScreenplayLayout } from "../../src/core/layout/infer-screenplay-la
 import { groupPositionedTextIntoPhysicalLines } from "../../src/core/physical-lines.js";
 import { recognizeScreenplay } from "../../src/core/recognition/recognize-screenplay.js";
 import { extractPositionedPdfText } from "../../src/pdf/extraction/pdf-inspector.js";
-import { normalizeNativePhysicalText } from "../../src/pdf/normalization/native-text.js";
+import { normalizePhysicalText } from "../../src/pdf/normalization/physical-text.js";
 import { brickAndSteelDocument } from "../fixtures/semantic/brick-and-steel-document.js";
 import { normalizationGauntletDocument } from "../fixtures/semantic/normalization-gauntlet-document.js";
 
@@ -19,7 +19,7 @@ const gauntletPdfUrls = [
 function recognizePdf(pdfUrl: URL) {
   const positionedText = extractPositionedPdfText(readFileSync(pdfUrl));
   const physicalText = groupPositionedTextIntoPhysicalLines(positionedText);
-  const normalizedText = normalizeNativePhysicalText(physicalText);
+  const normalizedText = normalizePhysicalText(physicalText);
   const layout = inferScreenplayLayout(normalizedText);
 
   return recognizeScreenplay(normalizedText, layout);

@@ -5,7 +5,7 @@ import type {
   PhysicalTextLine,
 } from "../../../src/core/physical-lines.js";
 import type { NormalizedText } from "../../../src/core/normalized-text.js";
-import { normalizeNativePhysicalText } from "../../../src/pdf/normalization/native-text.js";
+import { normalizePhysicalText } from "../../../src/pdf/normalization/physical-text.js";
 
 const courierFont = { name: "Courier Prime", size: 12 } as const;
 const plainStyle = {
@@ -47,7 +47,7 @@ function createPhysicalLine(
   };
 }
 
-describe("normalizeNativePhysicalText", () => {
+describe("normalizePhysicalText", () => {
   it("retains and diagnoses a pagination marker away from the page boundary", () => {
     const ambiguousMoreLine = createPhysicalLine(3, 0, "(MORE)", 216, 360);
     const physicalText: PhysicalText = {
@@ -65,7 +65,7 @@ describe("normalizeNativePhysicalText", () => {
         createPhysicalLine(10, 1, "The final action remains.", 108, 84),
       ],
     };
-    const result: NormalizedText = normalizeNativePhysicalText(physicalText);
+    const result: NormalizedText = normalizePhysicalText(physicalText);
     const activeMoreLine = result.pages
       .flatMap((page) => page.lines)
       .find((line) => line.spans.some((span) => span.sourceIndex === 3));
@@ -109,7 +109,7 @@ describe("normalizeNativePhysicalText", () => {
           createPhysicalLine(6, 1, "The next scene continues.", 108, 84),
         ],
       };
-      const result: NormalizedText = normalizeNativePhysicalText(physicalText);
+      const result: NormalizedText = normalizePhysicalText(physicalText);
 
       expect(result.suppressed).toEqual([
         { line: moreLine, reasons: ["screenplay-pagination"] },
@@ -147,7 +147,7 @@ describe("normalizeNativePhysicalText", () => {
         createPhysicalLine(7, 1, "The next scene continues.", 108, 84),
       ],
     };
-    const result: NormalizedText = normalizeNativePhysicalText(physicalText);
+    const result: NormalizedText = normalizePhysicalText(physicalText);
 
     expect(result.suppressed).toEqual([]);
     expect(result.pages.flatMap((page) => page.lines)).toEqual(

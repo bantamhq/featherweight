@@ -12,7 +12,7 @@ import type {
   SuppressedPhysicalTextLine,
 } from "../../src/core/normalized-text.js";
 import { extractPositionedPdfText } from "../../src/pdf/extraction/pdf-inspector.js";
-import { normalizeNativePhysicalText } from "../../src/pdf/normalization/native-text.js";
+import { normalizePhysicalText } from "../../src/pdf/normalization/physical-text.js";
 
 const cleanGauntletPdfUrl = new URL(
   "../normalization-gauntlet-clean.pdf",
@@ -116,14 +116,14 @@ function expectOrderedPages(
   }
 }
 
-describe("normalizeNativePhysicalText", () => {
+describe("normalizePhysicalText", () => {
   it("recovers equal active screenplays from clean and marked exports", () => {
     const cleanPhysicalText = extractPhysicalText(cleanGauntletPdfUrl);
     const markedPhysicalText = extractPhysicalText(markedGauntletPdfUrl);
-    const cleanResult: NormalizedText = normalizeNativePhysicalText(
+    const cleanResult: NormalizedText = normalizePhysicalText(
       cleanPhysicalText,
     );
-    const markedResult: NormalizedText = normalizeNativePhysicalText(
+    const markedResult: NormalizedText = normalizePhysicalText(
       markedPhysicalText,
     );
     const screenplayPagination = ["screenplay-pagination"] as const;
@@ -324,7 +324,7 @@ describe("normalizeNativePhysicalText", () => {
 
   it("removes only source page numbers from Brick & Steel", () => {
     const physicalText = extractPhysicalText(brickAndSteelPdfUrl);
-    const result: NormalizedText = normalizeNativePhysicalText(physicalText);
+    const result: NormalizedText = normalizePhysicalText(physicalText);
     const expectedSuppressed: readonly SuppressedPhysicalTextLine[] = [
       {
         line: findLine(physicalText, 2, "2."),

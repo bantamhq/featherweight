@@ -12,9 +12,9 @@ import type {
   TextStyle,
   Transition,
 } from "../../../src/core/screenplay-document.js";
-import { screenplayToFountain } from "../../../src/fountain/screenplay-to-fountain.js";
+import { screenplayDocumentToFountain } from "../../../src/fountain/screenplay-document-to-fountain.js";
 
-describe("screenplayToFountain", () => {
+describe("screenplayDocumentToFountain", () => {
   it("serializes every model-only variant and shape-driven title layout", () => {
     const document: ScreenplayDocument = {
       titlePage: [
@@ -59,7 +59,7 @@ describe("screenplayToFountain", () => {
       ],
     };
 
-    expect(screenplayToFountain(document)).toBe(
+    expect(screenplayDocumentToFountain(document)).toBe(
       "Open key: One line\n" +
         "Gallery:\n" +
         "    _first_\n" +
@@ -109,7 +109,7 @@ describe("screenplayToFountain", () => {
       ],
     };
 
-    expect(screenplayToFountain(document)).toBe(
+    expect(screenplayDocumentToFountain(document)).toBe(
       "EXT. ROAD - DAY\n\n" +
         "int. cellar - night\n\n" +
         ".FLASHBACK\n\n" +
@@ -166,7 +166,7 @@ describe("screenplayToFountain", () => {
       ],
     };
 
-    expect(screenplayToFountain(document)).toBe(
+    expect(screenplayDocumentToFountain(document)).toBe(
       "CAPTAIN\n" +
         "(*quietly*)\n" +
         "first line\n" +
@@ -229,7 +229,7 @@ describe("screenplayToFountain", () => {
       ],
     };
 
-    expect(screenplayToFountain(document)).toBe(
+    expect(screenplayDocumentToFountain(document)).toBe(
       "Literal \\\\ \\* \\_ markers. *italic*, **bold**, _underline_, ***bold italic***, _**bold underline**_, _*italic underline*_, and _***all***_.\n\n" +
         "_under**bold*italic*bold again**under again_\n\n" +
         "*before*\n" +
@@ -251,14 +251,14 @@ describe("screenplayToFountain", () => {
     });
     const expected = "Styled: _***stable***_\n\n***repeatable***\n";
 
-    expect([screenplayToFountain(document), screenplayToFountain(document)]).toEqual([
+    expect([screenplayDocumentToFountain(document), screenplayDocumentToFountain(document)]).toEqual([
       expected,
       expected,
     ]);
   });
 
   it("returns the exact empty string for an empty document", () => {
-    expect(screenplayToFountain({ titlePage: [], elements: [] })).toBe("");
+    expect(screenplayDocumentToFountain({ titlePage: [], elements: [] })).toBe("");
   });
 });
 

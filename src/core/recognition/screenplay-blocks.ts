@@ -44,6 +44,11 @@ export function extractTitlePage(
   }
 
   const firstPageIndex = lines[0]!.pageIndex;
+
+  if (firstPageIndex !== 0) {
+    return { fields: [], bodyLines: lines, unattributedLines: [] };
+  }
+
   const firstPageLines = lines.filter((line) => line.pageIndex === firstPageIndex);
   const bodyLines = lines.filter((line) => line.pageIndex !== firstPageIndex);
   const isSeparateTitlePage =
@@ -809,6 +814,10 @@ function continuesActionParagraph(
 ): boolean {
   if (previousLine.pageIndex === line.pageIndex) {
     return areVerticallyAdjacent(previousLine, line, 1.5);
+  }
+
+  if (line.pageIndex !== previousLine.pageIndex + 1) {
+    return false;
   }
 
   if (actionLineMeasure === null) {

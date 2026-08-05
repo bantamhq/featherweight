@@ -7,7 +7,28 @@ import {
   inspectScreenplayPdf,
   PdfInspectionError,
 } from "../../src/index.js";
+import type {
+  PdfInspection,
+  PdfInspectionErrorCode,
+  PositionedTextBounds,
+  PositionedTextFont,
+  PositionedTextPage,
+  PositionedTextPageItem,
+  PositionedTextStyle,
+  ScreenplayConversionErrorCode,
+} from "../../src/index.js";
 import * as featherweight from "../../src/index.js";
+
+type PublicTypeSurface = readonly [
+  PdfInspection,
+  PdfInspectionErrorCode,
+  ScreenplayConversionErrorCode,
+  PositionedTextPage,
+  PositionedTextPageItem,
+  PositionedTextBounds,
+  PositionedTextFont,
+  PositionedTextStyle,
+];
 
 const fixtureCases = [
   ["native", "brick-and-steel.pdf", []],
@@ -39,7 +60,7 @@ describe("inspectScreenplayPdf", () => {
     const result = inspectScreenplayPdf(offsetView);
 
     expect(result).toEqual({ pageCount: 5, pagesNeedingOcr: [1, 3] });
-    expect(paddedBytes).toEqual(originalPaddedBytes);
+    expect(Buffer.compare(paddedBytes, originalPaddedBytes)).toBe(0);
   });
 
   it("wraps malformed bytes synchronously with a sanitized public error", () => {
@@ -63,11 +84,13 @@ describe("inspectScreenplayPdf", () => {
     expect((thrown as Error).message).not.toContain("not-pdf");
   });
 
-  it("exports only the approved runtime inspection surface from the root", () => {
+  it("exports only the approved runtime surface from the root", () => {
     expect(Object.keys(featherweight).sort()).toEqual([
       "PdfInspectionError",
+      "ScreenplayConversionError",
       "inspectScreenplayPdf",
       "screenplayToFountain",
+      "screenplayToJSON",
     ]);
   });
 });

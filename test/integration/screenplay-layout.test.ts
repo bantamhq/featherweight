@@ -12,7 +12,7 @@ import type {
 import { groupPositionedTextIntoPhysicalLines } from "../../src/core/physical-lines.js";
 import type { NormalizedText } from "../../src/core/normalized-text.js";
 import { extractPositionedPdfText } from "../../src/pdf/extraction/pdf-inspector.js";
-import { normalizeNativePhysicalText } from "../../src/pdf/normalization/native-text.js";
+import { normalizePhysicalText } from "../../src/pdf/normalization/physical-text.js";
 
 const brickAndSteelPdfUrl = new URL("../brick-and-steel.pdf", import.meta.url);
 const cleanGauntletPdfUrl = new URL(
@@ -28,7 +28,7 @@ function extractNormalizedText(pdfUrl: URL): NormalizedText {
   const positionedText = extractPositionedPdfText(readFileSync(pdfUrl));
   const physicalText = groupPositionedTextIntoPhysicalLines(positionedText);
 
-  return normalizeNativePhysicalText(physicalText);
+  return normalizePhysicalText(physicalText);
 }
 
 function expectLeftAnchor(

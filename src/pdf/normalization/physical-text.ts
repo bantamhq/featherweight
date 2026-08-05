@@ -10,11 +10,14 @@ import type {
 } from "../../core/normalized-text.js";
 import { detectPageArtifacts } from "./page-artifacts.js";
 
-export function normalizeNativePhysicalText(
+export function normalizePhysicalText(
   physicalText: PhysicalText,
+  representedPageIndexes: readonly number[] = [],
 ): NormalizedText {
   const decisions = detectPageArtifacts(physicalText);
-  const activeLinesByPage = new Map<number, PhysicalTextLine[]>();
+  const activeLinesByPage = new Map<number, PhysicalTextLine[]>(
+    representedPageIndexes.map((pageIndex) => [pageIndex, []]),
+  );
   const suppressed: SuppressedPhysicalTextLine[] = [];
   const diagnostics: NormalizationDiagnostic[] = [];
 

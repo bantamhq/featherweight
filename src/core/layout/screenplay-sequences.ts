@@ -627,7 +627,7 @@ function findDialogueOccurrences(
       }
 
       const continuesAcrossPage =
-        continuation.pageIndex !== previousLine.pageIndex;
+        continuation.pageIndex === previousLine.pageIndex + 1;
       const continuesOnPage = isVerticallyAdjacent(
         previousLine,
         continuation,

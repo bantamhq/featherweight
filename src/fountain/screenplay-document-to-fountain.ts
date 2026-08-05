@@ -21,7 +21,9 @@ import {
 const automaticSceneHeadingPattern =
   /^(?:INT\.\/EXT|INT\/EXT|INT|EXT|EST|I\/E)(?:[. ])/i;
 
-export function screenplayToFountain(document: ScreenplayDocument): string {
+export function screenplayDocumentToFountain(
+  document: ScreenplayDocument,
+): string {
   const titlePage = serializeTitlePage(document.titlePage);
   const bodyBlocks = serializeBody(document.elements);
   const documentSections =
