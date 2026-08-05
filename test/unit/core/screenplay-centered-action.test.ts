@@ -111,4 +111,49 @@ describe("centered Action recognition", () => {
       ],
     });
   });
+
+  it("centers context-supported display lines at a stable exporter center", () => {
+    const input = normalizedText([
+      { text: "TITLE OVER:", x: 100, y: 700, width: 79 },
+      { text: "BIG FISH", x: 288, y: 676, width: 56 },
+      { text: "INT. HOSPITAL - DAY", x: 100, y: 640, width: 144 },
+      { text: "CUT TO BLACK.", x: 326, y: 604, width: 94 },
+      { text: "THE END", x: 291.5, y: 568, width: 49 },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("TITLE OVER:"),
+        action("BIG FISH", "center"),
+        {
+          type: "scene-heading",
+          text: {
+            runs: [{ text: "INT. HOSPITAL - DAY", styles: [] }],
+          },
+          sceneNumber: null,
+        },
+        {
+          type: "transition",
+          text: { runs: [{ text: "CUT TO BLACK.", styles: [] }] },
+        },
+        action("THE END", "center"),
+      ],
+    });
+  });
+
+  it("keeps repeated isolated inset Action standard away from the screenplay center", () => {
+    const input = normalizedText([
+      { text: "first inset action", x: 330, y: 700, width: 100 },
+      { text: "second inset action", x: 340, y: 640, width: 80 },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("first inset action"),
+        action("second inset action"),
+      ],
+    });
+  });
 });

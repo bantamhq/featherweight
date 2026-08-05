@@ -174,7 +174,7 @@ describe("recognizeScreenplay", () => {
     expect(recognizeScreenplay(normalizedText, standardLayout)).toEqual(expected);
   });
 
-  it("strips only a terminal ASCII continuation suffix from character cues", () => {
+  it("strips only the standard terminal continuation suffix across PDF typography", () => {
     const normalizedText = createNormalizedText([
       {
         pageIndex: 0,
@@ -212,7 +212,7 @@ describe("recognizeScreenplay", () => {
         dialogue("Fourth."),
         character("MARK (CONT'D.)"),
         dialogue("Fifth."),
-        character("MARK (CONT’D)"),
+        character("MARK"),
         dialogue("Sixth."),
         character("MARK (CONT'D) (V.O.)"),
         dialogue("Seventh."),

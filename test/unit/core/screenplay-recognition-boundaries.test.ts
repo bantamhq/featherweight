@@ -192,6 +192,286 @@ describe("recognizeScreenplay evidence boundaries", () => {
     });
   });
 
+  it("recognizes a standard title page with independent notes and copyright footer regions", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "Big Fish", x: 278, y: 531, width: 56 },
+          { text: "written by", x: 271, y: 483, width: 70 },
+          { text: "John August", x: 267, y: 459, width: 77 },
+          {
+            text: "based on the novel by Daniel Wallace",
+            x: 180,
+            y: 399,
+            width: 252,
+          },
+          {
+            text: "FINAL PRODUCTION DRAFT",
+            x: 386,
+            y: 207,
+            width: 154,
+          },
+          {
+            text: "includes post-production dialogue",
+            x: 309,
+            y: 195,
+            width: 231,
+          },
+          { text: "and omitted scenes", x: 414, y: 183, width: 126 },
+          {
+            text: "Copyright © 2003 Columbia Pictures",
+            x: 72,
+            y: 147,
+            width: 238,
+          },
+        ],
+      },
+      {
+        pageIndex: 1,
+        lines: [
+          {
+            text: "This is a Southern story.",
+            x: 108,
+            y: 700,
+            width: 180,
+          },
+        ],
+      },
+      {
+        pageIndex: 2,
+        lines: [
+          {
+            text: "INT. RIVER - DAY",
+            x: 108,
+            y: 700,
+            styles: ["bold"],
+          },
+        ],
+      },
+    ]);
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [
+        titleField("Title", "Big Fish"),
+        titleField("Credit", "written by"),
+        titleField("Author", "John August"),
+        titleField("Source", "based on the novel by Daniel Wallace"),
+        titleField(
+          "Notes",
+          "FINAL PRODUCTION DRAFT",
+          "includes post-production dialogue",
+          "and omitted scenes",
+        ),
+        titleField("Copyright", "Copyright © 2003 Columbia Pictures"),
+      ],
+      elements: [
+        action("This is a Southern story."),
+        scene("INT. RIVER - DAY"),
+      ],
+    });
+  });
+
+  it("recognizes a standalone opening FADE IN as a transition without inventing punctuation", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "FADE IN", x: 108, y: 700, width: 49 },
+          { text: "A RIVER.", x: 108, y: 676, width: 58 },
+        ],
+      },
+    ]);
+    const nonTransitionInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "FADE IN THE DISTANCE", x: 108, y: 700, width: 144 },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        { type: "transition", text: styled(run("FADE IN")) },
+        action("A RIVER."),
+      ],
+    });
+    expect(recognizeScreenplay(nonTransitionInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [action("FADE IN THE DISTANCE")],
+    });
+  });
+
+  it("preserves deliberate short dialogue lines while joining ordinary PDF wraps", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "MARA", x: 252, y: 700, width: 35 },
+          {
+            text: "This ordinary dialogue reaches the established dialogue",
+            x: 180,
+            y: 688,
+            width: 360,
+          },
+          {
+            text: "measure and continues as one paragraph.",
+            x: 180,
+            y: 676,
+            width: 266,
+          },
+          { text: "SINGER", x: 252, y: 640, width: 42 },
+          {
+            text: "First deliberate line.",
+            x: 180,
+            y: 628,
+            width: 154,
+            styles: ["italic"],
+          },
+          {
+            text: "Second deliberate line.",
+            x: 180,
+            y: 616,
+            width: 161,
+            styles: ["italic"],
+          },
+        ],
+      },
+    ]);
+    const italicWrappedInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "SINGER", x: 252, y: 700, width: 42 },
+          {
+            text: "This ordinary italic dialogue reaches the established dialogue",
+            x: 180,
+            y: 688,
+            width: 360,
+            styles: ["italic"],
+          },
+          {
+            text: "measure and continues as one paragraph.",
+            x: 180,
+            y: 676,
+            width: 266,
+            styles: ["italic"],
+          },
+        ],
+      },
+    ]);
+    const establishedStanzaInput = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "SINGER", x: 252, y: 700, width: 42 },
+          {
+            text: "First short line.",
+            x: 180,
+            y: 688,
+            width: 120,
+            styles: ["italic"],
+          },
+          {
+            text: "Second short line.",
+            x: 180,
+            y: 676,
+            width: 120,
+            styles: ["italic"],
+          },
+          {
+            text: "This emphasized sentence nearly fills the dialogue measure.",
+            x: 180,
+            y: 664,
+            width: 350,
+            styles: ["italic"],
+          },
+          {
+            text: "Another verse begins and wraps across the dialogue",
+            x: 180,
+            y: 652,
+            width: 360,
+            styles: ["italic"],
+          },
+          {
+            text: "measure.",
+            x: 180,
+            y: 640,
+            width: 60,
+            styles: ["italic"],
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        {
+          type: "character",
+          text: styled(run("MARA")),
+        },
+        {
+          type: "dialogue",
+          text: styled(
+            run(
+              "This ordinary dialogue reaches the established dialogue measure and continues as one paragraph.",
+            ),
+          ),
+        },
+        {
+          type: "character",
+          text: styled(run("SINGER")),
+        },
+        {
+          type: "dialogue",
+          text: styled(
+            run("First deliberate line.\nSecond deliberate line.", [
+              "italic",
+            ]),
+          ),
+        },
+      ],
+    });
+    expect(recognizeScreenplay(italicWrappedInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        {
+          type: "character",
+          text: styled(run("SINGER")),
+        },
+        {
+          type: "dialogue",
+          text: styled(
+            run(
+              "This ordinary italic dialogue reaches the established dialogue measure and continues as one paragraph.",
+              ["italic"],
+            ),
+          ),
+        },
+      ],
+    });
+    expect(recognizeScreenplay(establishedStanzaInput, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        {
+          type: "character",
+          text: styled(run("SINGER")),
+        },
+        {
+          type: "dialogue",
+          text: styled(
+            run(
+              "First short line.\nSecond short line.\nThis emphasized sentence nearly fills the dialogue measure.\nAnother verse begins and wraps across the dialogue measure.",
+              ["italic"],
+            ),
+          ),
+        },
+      ],
+    });
+  });
+
   it("joins only evidence-supported Action continuation across a physical page boundary", () => {
     const continuousInput = normalizedText([
       {

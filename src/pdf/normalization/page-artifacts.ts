@@ -47,7 +47,7 @@ const moreMarker = "(MORE)";
 const continuedMarker = "(CONTINUED)";
 const continuedHeaderPattern = /^CONTINUED:\s*\(\d+\)$/;
 const continuedCuePattern =
-  /^([A-Z][A-Z0-9 .'-]*?)(?: \((?:V\.?O\.?|O\.?S\.?)\))? \(CONT['’]D\)$/;
+  /^([A-Z][A-Z0-9 .'-]*?)(?: \((?:V\.?O\.?|O\.?S\.?)\))? \((?:CONT['’]D|cont['’]d)\)$/;
 const extendedCuePattern =
   /^([A-Z][A-Z0-9 .'-]*?) \((?:V\.?O\.?|O\.?S\.?)\)$/;
 const bareCuePattern = /^[A-Z][A-Z0-9 .'-]*$/;

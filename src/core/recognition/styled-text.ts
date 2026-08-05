@@ -47,16 +47,37 @@ export function createStyledText(
       }
     }
 
-    for (const span of line.spans) {
+    let previousSpanEnd = 0;
+
+    for (const [spanIndex, span] of line.spans.entries()) {
+      if (span.start > previousSpanEnd) {
+        appendRun(
+          runs,
+          line.text.slice(previousSpanEnd, span.start),
+          separatorStylesForSpans(line.spans[spanIndex - 1], span),
+        );
+      }
+
       appendRun(
         runs,
         line.text.slice(span.start, span.end),
         stylesForSpan(span),
       );
+      previousSpanEnd = span.end;
     }
   }
 
   return { runs };
+}
+
+function separatorStylesForSpans(
+  previousSpan: PhysicalTextSpan | undefined,
+  nextSpan: PhysicalTextSpan,
+): readonly TextStyle[] {
+  const previousStyles = stylesForSpan(previousSpan);
+  const nextStyles = stylesForSpan(nextSpan);
+
+  return haveSameStyles(previousStyles, nextStyles) ? previousStyles : [];
 }
 
 export function styledTextValue(text: StyledText): string {

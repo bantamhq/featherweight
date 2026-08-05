@@ -170,6 +170,13 @@ function findTransitionLines(
     return [];
   }
 
+  const standaloneOpeningTransitions = lines.filter(
+    (line, index) =>
+      !reservedLines.has(line) &&
+      line.text.trim() === "FADE IN" &&
+      (index === 0 || lines[index - 1]!.pageIndex !== line.pageIndex),
+  );
+
   const pages = Map.groupBy(lines, (line) => line.pageIndex);
   const pageLeftEdges = [...pages.values()].map((pageLines) =>
     Math.min(...pageLines.map((line) => line.bounds.x)),
@@ -224,7 +231,13 @@ function findTransitionLines(
     return hasLeftwardFollowingLine || hasRepeatedRightEdge;
   });
 
-  return [...new Set([...repeatedTransitionLines, ...contextualTransitionLines])];
+  return [
+    ...new Set([
+      ...repeatedTransitionLines,
+      ...contextualTransitionLines,
+      ...standaloneOpeningTransitions,
+    ]),
+  ];
 }
 
 function findRepeatedTransitionLines(

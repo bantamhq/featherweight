@@ -87,8 +87,9 @@ describe("normalizePhysicalText", () => {
   it.each([
     ["MARK (V.O.)", "MARK (V.O.) (CONT’D)"],
     ["MARK (VO)", "MARK (VO) (CONT'D)"],
+    ["MARK (V.O.)", "MARK (V.O.) (cont’d)"],
   ])(
-    "suppresses a page-local MORE with the continued voice-over cue %s",
+    "suppresses a page-local MORE from %s with generated cue %s",
     (ordinaryCueText, continuedCueText) => {
       const moreLine = createPhysicalLine(3, 0, "(MORE)", 216, 300);
       const continuedCueLine = createPhysicalLine(

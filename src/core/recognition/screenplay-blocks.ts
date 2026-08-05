@@ -124,7 +124,7 @@ function recognizeConventionalTitlePage(
         coordinateTolerance,
       ),
     ) &&
-    hasRelativeVerticalGap(titleValues.at(-1)!, credit, 3) &&
+    hasOneOfRelativeVerticalGaps(titleValues.at(-1)!, credit, [3, 4]) &&
     hasRelativeVerticalGap(credit, author, 2) &&
     hasOneOfRelativeVerticalGaps(author, source, [3, 5]);
   const footerLines = [draftDate, ...contact];
@@ -144,8 +144,27 @@ function recognizeConventionalTitlePage(
       areVerticallyAdjacent(contact[index]!, line, 1.5),
     );
 
-  if (!hasConventionalUpperGeometry || !hasConventionalFooterGeometry) {
+  const independentFooter = recognizeIndependentFooter(
+    footerLines,
+    coordinateTolerance,
+  );
+
+  if (
+    !hasConventionalUpperGeometry ||
+    (!hasConventionalFooterGeometry && independentFooter === null)
+  ) {
     return null;
+  }
+
+  if (independentFooter !== null) {
+    return [
+      createTitleField("Title", titleValues),
+      createTitleField("Credit", [credit]),
+      createTitleField("Author", [author]),
+      createTitleField("Source", [source]),
+      createTitleField("Notes", independentFooter.notes),
+      createTitleField("Copyright", [independentFooter.copyright]),
+    ];
   }
 
   return [
@@ -156,6 +175,44 @@ function recognizeConventionalTitlePage(
     createTitleField("Draft date", [draftDate]),
     createTitleField("Contact", contact),
   ];
+}
+
+function recognizeIndependentFooter(
+  lines: readonly PhysicalTextLine[],
+  coordinateTolerance: number,
+): {
+  readonly notes: readonly PhysicalTextLine[];
+  readonly copyright: PhysicalTextLine;
+} | null {
+  if (lines.length < 2) {
+    return null;
+  }
+
+  const copyright = lines.at(-1)!;
+  const notes = lines.slice(0, -1);
+  const rightEdgeTolerance = Math.max(
+    coordinateTolerance,
+    notes[0]!.bounds.height / 2,
+  );
+  const notesRightEdge = notes[0]!.bounds.x + notes[0]!.bounds.width;
+  const hasRightAlignedNotes =
+    notes.every(
+      (line) =>
+        Math.abs(line.bounds.x + line.bounds.width - notesRightEdge) <=
+        rightEdgeTolerance,
+    ) &&
+    notes.slice(1).every((line, index) =>
+      areVerticallyAdjacent(notes[index]!, line, 1.5),
+    );
+  const footerGap = verticalGapInLineHeights(notes.at(-1)!, copyright);
+  const isIndependentCopyright =
+    footerGap >= 2 &&
+    footerGap <= 5 &&
+    Math.abs(copyright.bounds.x - notes[0]!.bounds.x) > rightEdgeTolerance;
+
+  return hasRightAlignedNotes && isIndependentCopyright
+    ? { notes, copyright }
+    : null;
 }
 
 export function findSceneHeadings(
@@ -419,6 +476,28 @@ export function findCenteredActionLines(
       supportedGroups.some(
         (group) =>
           Math.abs(lineCenter(line) - group.center) <= line.bounds.height / 4,
+      )
+    ) {
+      centeredLines.add(line);
+    }
+  }
+
+  for (const line of candidates) {
+    const hasStableCenterPeer = candidates.some(
+      (candidate) =>
+        candidate !== line &&
+        Math.abs(lineCenter(candidate) - lineCenter(line)) <=
+          coordinateTolerance,
+    );
+
+    if (
+      hasStableCenterPeer &&
+      isAtEstablishedScreenplayCenter(line, layout) &&
+      isIsolatedFromRoleGeometry(
+        line,
+        lines,
+        layout,
+        coordinateTolerance,
       )
     ) {
       centeredLines.add(line);
@@ -707,9 +786,15 @@ function isAtEstablishedScreenplayCenter(
     return false;
   }
 
-  const expectedCenter = layout.action.x + line.bounds.height * 16.5;
+  const expectedCenters = [16.5, 18].map(
+    (characterMeasure) =>
+      layout.action!.x + line.bounds.height * characterMeasure,
+  );
 
-  return Math.abs(lineCenter(line) - expectedCenter) <= line.bounds.height;
+  return expectedCenters.some(
+    (expectedCenter) =>
+      Math.abs(lineCenter(line) - expectedCenter) <= line.bounds.height,
+  );
 }
 
 function lineCenter(line: PhysicalTextLine): number {

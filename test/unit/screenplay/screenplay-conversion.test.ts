@@ -19,6 +19,41 @@ const plainStyle: PositionedTextStyle = {
 };
 
 describe("screenplay conversion", () => {
+  it("preserves a geometry-evidenced word boundary between styled source items", () => {
+    const nativePages = [
+      page(
+        0,
+        item(
+          "thousand",
+          171,
+          387,
+          { ...plainStyle, underline: true },
+          56,
+        ),
+        item(
+          "times",
+          234,
+          387,
+          { ...plainStyle, underline: true },
+          35,
+        ),
+      ),
+    ] as const;
+    const expectedJSON = JSON.stringify(
+      {
+        titlePage: [],
+        elements: [
+          action([run("thousand times", ["underline"])]),
+        ],
+      },
+      null,
+      2,
+    ) + "\n";
+
+    expect(screenplayToJSON(nativePages, [])).toBe(expectedJSON);
+    expect(screenplayToFountain(nativePages, [])).toBe("_thousand times_\n");
+  });
+
   it("uses canonical page order, stable item order, and caller-visible source routing", () => {
     const pageZero = page(
       0,

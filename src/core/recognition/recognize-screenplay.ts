@@ -111,6 +111,11 @@ export function recognizeScreenplay(
     layout,
     coordinateTolerance,
   );
+  const dialogueLineMeasure = inferDialogueLineMeasure(
+    recognitionLines,
+    layout,
+    coordinateTolerance,
+  );
   const centeredActionLines = findCenteredActionLines(
     bodyLines,
     centeredEvidenceBlockedLines,
@@ -150,7 +155,11 @@ export function recognizeScreenplay(
 
     if (dialogue !== undefined) {
       elements.push(
-        ...createOrdinaryDialogue(dialogue, sentenceSpacingConvention),
+        ...createOrdinaryDialogue(
+          dialogue,
+          sentenceSpacingConvention,
+          dialogueLineMeasure,
+        ),
       );
       addConsumedLines(consumedLines, [
         dialogue.characterCue,
@@ -203,11 +212,16 @@ export function recognizeScreenplay(
 function createOrdinaryDialogue(
   occurrence: DialogueOccurrence,
   sentenceSpacingConvention: SentenceSpacingConvention,
+  dialogueLineMeasure: number | null,
 ): readonly (Character | Parenthetical | Dialogue)[] {
   return [
     createCharacter(occurrence.characterCue),
     ...occurrence.content.map((content) =>
-      createDialogueContent(content, sentenceSpacingConvention),
+      createDialogueContent(
+        content,
+        sentenceSpacingConvention,
+        dialogueLineMeasure,
+      ),
     ),
   ];
 }
@@ -247,6 +261,7 @@ function createDialogueSequence(
 function createDialogueContent(
   occurrence: DialogueContentOccurrence,
   sentenceSpacingConvention: SentenceSpacingConvention,
+  dialogueLineMeasure: number | null = null,
 ): Parenthetical | Dialogue {
   if (occurrence.type === "parenthetical") {
     return {
@@ -263,16 +278,116 @@ function createDialogueContent(
     type: "dialogue",
     text: createStyledText(
       occurrence.lines,
-      "wrap",
+      createDialogueLineJoins(occurrence.lines, dialogueLineMeasure),
       sentenceSpacingConvention,
     ),
   };
 }
 
+function inferDialogueLineMeasure(
+  lines: readonly PhysicalTextLine[],
+  layout: ScreenplayLayout,
+  coordinateTolerance: number,
+): number | null {
+  if (layout.dialogue === null) {
+    return null;
+  }
+
+  const widths = lines
+    .filter(
+      (line) =>
+        Math.abs(line.bounds.x - layout.dialogue!.x) <= coordinateTolerance,
+    )
+    .map((line) => line.bounds.width)
+    .sort((left, right) => left - right);
+
+  if (widths.length === 0) {
+    return null;
+  }
+
+  return widths[Math.floor((widths.length - 1) * 0.9)]!;
+}
+
+function createDialogueLineJoins(
+  lines: readonly PhysicalTextLine[],
+  dialogueLineMeasure: number | null,
+): readonly ("wrap" | "newline")[] {
+  if (dialogueLineMeasure === null) {
+    return [];
+  }
+
+  const lineJoins: ("wrap" | "newline")[] = [];
+
+  for (const [index, line] of lines.slice(1).entries()) {
+    const previousLine = lines[index]!;
+    const visibleShortfall =
+      Math.min(previousLine.bounds.height, line.bounds.height) * 5;
+    const previousLineIsShort =
+      previousLine.bounds.width + visibleShortfall < dialogueLineMeasure;
+    const lineIsShort =
+      line.bounds.width + visibleShortfall < dialogueLineMeasure;
+    const previousLineEndsSentence = /[.!?…]["'’”)]?\s*$/u.test(
+      previousLine.text,
+    );
+    const continuesEstablishedLineation =
+      lineJoins.at(-1) === "newline" && previousLineEndsSentence;
+    const preservesDeliberateBreak =
+      previousLine.pageIndex === line.pageIndex &&
+      hasEmphasizedStyle(previousLine) &&
+      haveMatchingLineStyles(previousLine, line) &&
+      ((previousLineIsShort && (lineIsShort || previousLineEndsSentence)) ||
+        continuesEstablishedLineation);
+
+    lineJoins.push(preservesDeliberateBreak ? "newline" : "wrap");
+  }
+
+  return lineJoins;
+}
+
+function hasEmphasizedStyle(line: PhysicalTextLine): boolean {
+  return line.spans.some(
+    (span) =>
+      span.style.bold ||
+      span.style.italic ||
+      span.style.underline ||
+      span.style.strikeout,
+  );
+}
+
+function haveMatchingLineStyles(
+  left: PhysicalTextLine,
+  right: PhysicalTextLine,
+): boolean {
+  const leftStyle = left.spans[0]?.style;
+  const rightStyle = right.spans[0]?.style;
+
+  if (leftStyle === undefined || rightStyle === undefined) {
+    return false;
+  }
+
+  return (
+    left.spans.every((span) => haveMatchingStyles(span.style, leftStyle)) &&
+    right.spans.every((span) => haveMatchingStyles(span.style, rightStyle)) &&
+    haveMatchingStyles(leftStyle, rightStyle)
+  );
+}
+
+function haveMatchingStyles(
+  left: PhysicalTextLine["spans"][number]["style"],
+  right: PhysicalTextLine["spans"][number]["style"],
+): boolean {
+  return (
+    left.bold === right.bold &&
+    left.italic === right.italic &&
+    left.underline === right.underline &&
+    left.strikeout === right.strikeout
+  );
+}
+
 function createCharacter(line: PhysicalTextLine): Character {
   const text = createStyledText([line]);
   const value = styledTextValue(text);
-  const continuation = /\s*\(CONT'D\)\s*$/iu.exec(value);
+  const continuation = /\s*\(CONT['’]D\)\s*$/iu.exec(value);
 
   if (continuation === null || continuation.index === undefined) {
     return { type: "character", text };

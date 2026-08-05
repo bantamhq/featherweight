@@ -144,11 +144,21 @@ function areHorizontallyConnected(
 function createPhysicalTextLine(
   items: readonly PositionedTextItem[],
 ): PhysicalTextLine {
-  const text = items.map((item) => item.text).join("");
+  let text = "";
   const spans: PhysicalTextSpan[] = [];
-  let start = 0;
 
-  for (const item of items) {
+  for (const [itemIndex, item] of items.entries()) {
+    const previousItem = items[itemIndex - 1];
+
+    if (
+      previousItem !== undefined &&
+      hasGeometricWordBoundary(previousItem, item)
+    ) {
+      text += " ";
+    }
+
+    const start = text.length;
+    text += item.text;
     const end = start + item.text.length;
 
     spans.push({
@@ -160,7 +170,6 @@ function createPhysicalTextLine(
       font: item.font,
       style: item.style,
     });
-    start = end;
   }
 
   return {
@@ -169,6 +178,26 @@ function createPhysicalTextLine(
     bounds: createAggregateBounds(items),
     spans,
   };
+}
+
+function hasGeometricWordBoundary(
+  left: PositionedTextItem,
+  right: PositionedTextItem,
+): boolean {
+  if (/\s$/u.test(left.text) || /^\s/u.test(right.text)) {
+    return false;
+  }
+
+  if (/^[,.;:!?…)]/u.test(right.text) || left.text.endsWith("-")) {
+    return false;
+  }
+
+  const horizontalGap = right.bounds.x - (left.bounds.x + left.bounds.width);
+  const leftCharacterWidth = left.bounds.width / Math.max(left.text.length, 1);
+  const rightCharacterWidth = right.bounds.width / Math.max(right.text.length, 1);
+  const localCharacterWidth = Math.min(leftCharacterWidth, rightCharacterWidth);
+
+  return horizontalGap >= localCharacterWidth / 2;
 }
 
 function createAggregateBounds(
