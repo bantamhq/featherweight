@@ -1,7 +1,7 @@
 {
   "name": "@bantam-hq/featherweight",
   "version": "0.1.2",
-  "description": "Recover semantic screenplay documents from PDFs.",
+  "description": "Turn a screenplay PDF into Fountain, FDX, or structured JSON.",
   "type": "module",
   "license": "MIT",
   "author": "Bantam HQ",
