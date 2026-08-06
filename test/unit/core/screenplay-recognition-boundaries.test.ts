@@ -616,6 +616,97 @@ describe("recognizeScreenplay evidence boundaries", () => {
     });
   });
 
+  it("preserves adjacent inset Action lines as one multiline block", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "The card contains a handwritten address:",
+            x: 108,
+            y: 700,
+            width: 420,
+          },
+          { text: "First handwritten line", x: 162, y: 676 },
+          { text: "Second handwritten line", x: 162, y: 664 },
+          { text: "Third handwritten line", x: 162, y: 652 },
+          {
+            text: "Scott picks up the phone.",
+            x: 108,
+            y: 628,
+            width: 420,
+          },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        action("The card contains a handwritten address:"),
+        action(
+          "First handwritten line\nSecond handwritten line\nThird handwritten line",
+        ),
+        action("Scott picks up the phone."),
+      ],
+    });
+  });
+
+  it("detects scene numbers from left, right, and bilateral fragments", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          { text: "0", x: 54, y: 724 },
+          { text: "OVER BLACK:", x: 108, y: 724 },
+          { text: "1A", x: 54, y: 700 },
+          { text: "EXT. FIELD - MORNING", x: 108, y: 700 },
+          { text: "INT. HOUSE - DAY", x: 108, y: 676 },
+          { text: "2", x: 540, y: 676 },
+          { text: "3", x: 54, y: 652 },
+          { text: "EXT. ROAD - NIGHT", x: 108, y: 652 },
+          { text: "3", x: 540, y: 652 },
+          { text: "They cross the field.", x: 108, y: 628 },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [
+        {
+          type: "scene-heading",
+          text: {
+            runs: [{ text: "OVER BLACK:", styles: [] }],
+          },
+          sceneNumber: "0",
+        },
+        {
+          type: "scene-heading",
+          text: {
+            runs: [{ text: "EXT. FIELD - MORNING", styles: [] }],
+          },
+          sceneNumber: "1A",
+        },
+        {
+          type: "scene-heading",
+          text: {
+            runs: [{ text: "INT. HOUSE - DAY", styles: [] }],
+          },
+          sceneNumber: "2",
+        },
+        {
+          type: "scene-heading",
+          text: {
+            runs: [{ text: "EXT. ROAD - NIGHT", styles: [] }],
+          },
+          sceneNumber: "3",
+        },
+        action("They cross the field."),
+      ],
+    });
+  });
+
   it("uses the document sentence-spacing convention only at physical-wrap joins", () => {
     const oneSpaceInput = normalizedText([
       {

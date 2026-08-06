@@ -2,6 +2,12 @@
 
 All notable changes to Featherweight are documented in this file.
 
+## 0.1.2 - 2026-08-06
+
+- Preserve adjacent inset action lines as newline-delimited blocks.
+- Detect scene numbers printed on the left, right, or both sides of scene
+  headings, including numbered nonstandard headings.
+
 ## 0.1.1 - 2026-08-05
 
 - Correct the public conversion API to accept PDF bytes and native/OCR page

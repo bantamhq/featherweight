@@ -31,7 +31,13 @@ export interface ActionLineGroup {
   readonly nextIndex: number;
 }
 
+interface SceneNumberEvidence {
+  readonly fragments: readonly PhysicalTextLine[];
+  readonly number: string;
+}
+
 const conventionalSceneHeading = /^(?:INT\.|EXT\.|INT\/EXT\.|I\/E\.|EST\.)/u;
+const plausibleSceneNumber = /^(?=.*\d)[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/iu;
 const conventionalCredit =
   /^(?:written|prepared|screenplay|teleplay)\s+(?:by|for)$/iu;
 const draftDate = /^\d{1,4}[./-]\d{1,2}[./-]\d{1,4}$/u;
@@ -341,8 +347,35 @@ export function findSceneHeadings(
   for (const [headingIndex, heading] of lines.entries()) {
     if (
       reservedLines.has(heading) ||
-      consumedContinuationLines.has(heading) ||
-      !isSceneHeadingLine(heading, layout, coordinateTolerance)
+      consumedContinuationLines.has(heading)
+    ) {
+      continue;
+    }
+
+    const isEstablishedSceneHeading = isSceneHeadingLine(
+      heading,
+      layout,
+      coordinateTolerance,
+    );
+    const isPossibleNumberedSceneHeading = isNumberedSceneHeadingLine(
+      heading,
+      layout,
+      coordinateTolerance,
+    );
+
+    if (!isEstablishedSceneHeading && !isPossibleNumberedSceneHeading) {
+      continue;
+    }
+
+    const sceneNumber = findSceneNumberEvidence(
+      lines,
+      heading,
+      coordinateTolerance,
+    );
+
+    if (
+      !isEstablishedSceneHeading &&
+      (sceneNumber === null || !plausibleSceneNumber.test(sceneNumber.number))
     ) {
       continue;
     }
@@ -365,30 +398,10 @@ export function findSceneHeadings(
       consumedContinuationLines.add(headingLines[1]!);
     }
 
-    const baselineFragments = lines.filter(
-      (line) =>
-        line !== heading &&
-        line.pageIndex === heading.pageIndex &&
-        Math.abs(line.bounds.y - heading.bounds.y) <= coordinateTolerance,
-    );
-    const leftFragments = baselineFragments.filter(
-      (line) => line.bounds.x < heading.bounds.x,
-    );
-    const rightFragments = baselineFragments.filter(
-      (line) => line.bounds.x > heading.bounds.x + heading.bounds.width,
-    );
-    const matchingNumbers = leftFragments.flatMap((left) =>
-      rightFragments
-        .filter((right) => right.text.trim() === left.text.trim())
-        .map((right) => ({ left, right, number: left.text.trim() })),
-    );
-    const sceneNumber = matchingNumbers[0];
-
     headings.push({
       heading,
       headingLines,
-      numberFragments:
-        sceneNumber === undefined ? [] : [sceneNumber.left, sceneNumber.right],
+      numberFragments: sceneNumber?.fragments ?? [],
       sceneNumber: sceneNumber?.number ?? null,
     });
   }
@@ -994,6 +1007,74 @@ function isSceneHeadingLine(
   );
 }
 
+function isNumberedSceneHeadingLine(
+  line: PhysicalTextLine,
+  layout: ScreenplayLayout,
+  coordinateTolerance: number,
+): boolean {
+  return (
+    layout.action !== null &&
+    Math.abs(line.bounds.x - layout.action.x) <= coordinateTolerance &&
+    isUppercaseText(line.text.trim())
+  );
+}
+
+function findSceneNumberEvidence(
+  lines: readonly PhysicalTextLine[],
+  heading: PhysicalTextLine,
+  coordinateTolerance: number,
+): SceneNumberEvidence | null {
+  const baselineFragments = lines.filter(
+    (line) =>
+      line !== heading &&
+      line.pageIndex === heading.pageIndex &&
+      Math.abs(line.bounds.y - heading.bounds.y) <= coordinateTolerance,
+  );
+  const leftFragments = baselineFragments.filter(
+    (line) => line.bounds.x < heading.bounds.x,
+  );
+  const rightFragments = baselineFragments.filter(
+    (line) => line.bounds.x > heading.bounds.x + heading.bounds.width,
+  );
+  const pairedSceneNumber = leftFragments.flatMap((left) =>
+    rightFragments
+      .filter((right) => right.text.trim() === left.text.trim())
+      .map(
+        (right): SceneNumberEvidence => ({
+          fragments: [left, right],
+          number: left.text.trim(),
+        }),
+      ),
+  )[0];
+
+  if (pairedSceneNumber !== undefined) {
+    return pairedSceneNumber;
+  }
+
+  const leftSceneNumber = [...leftFragments]
+    .filter((line) => plausibleSceneNumber.test(line.text.trim()))
+    .sort(
+      (left, right) =>
+        heading.bounds.x - (left.bounds.x + left.bounds.width) -
+        (heading.bounds.x - (right.bounds.x + right.bounds.width)),
+    )[0];
+
+  if (leftSceneNumber !== undefined) {
+    return {
+      fragments: [leftSceneNumber],
+      number: leftSceneNumber.text.trim(),
+    };
+  }
+
+  const rightSceneNumber = [...rightFragments]
+    .filter((line) => plausibleSceneNumber.test(line.text.trim()))
+    .sort((left, right) => left.bounds.x - right.bounds.x)[0];
+
+  return rightSceneNumber === undefined
+    ? null
+    : { fragments: [rightSceneNumber], number: rightSceneNumber.text.trim() };
+}
+
 function collectCenteredActionLines(options: {
   readonly lines: readonly PhysicalTextLine[];
   readonly startIndex: number;
@@ -1048,11 +1129,22 @@ function haveMatchingActionOrigins(
   layout: ScreenplayLayout,
   coordinateTolerance: number,
 ): boolean {
-  const expectedX = layout.action?.x ?? left.bounds.x;
+  if (layout.action === null) {
+    return Math.abs(left.bounds.x - right.bounds.x) <= coordinateTolerance;
+  }
+
+  const leftMatchesAction =
+    Math.abs(left.bounds.x - layout.action.x) <= coordinateTolerance;
+  const rightMatchesAction =
+    Math.abs(right.bounds.x - layout.action.x) <= coordinateTolerance;
+
+  if (leftMatchesAction || rightMatchesAction) {
+    return leftMatchesAction && rightMatchesAction;
+  }
 
   return (
-    Math.abs(left.bounds.x - expectedX) <= coordinateTolerance &&
-    Math.abs(right.bounds.x - expectedX) <= coordinateTolerance
+    left.bounds.x > layout.action.x + coordinateTolerance &&
+    Math.abs(left.bounds.x - right.bounds.x) <= coordinateTolerance
   );
 }
 
