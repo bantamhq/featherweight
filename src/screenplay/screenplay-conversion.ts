@@ -1,235 +1,174 @@
-import { inferScreenplayLayout } from "../core/layout/infer-screenplay-layout.js";
-import { groupPositionedTextIntoPhysicalLines } from "../core/physical-lines.js";
-import type {
-  PositionedText,
-  PositionedTextItem,
-  SourceMethod,
-} from "../core/positioned-text.js";
-import { recognizeScreenplay } from "../core/recognition/recognize-screenplay.js";
 import type { ScreenplayDocument } from "../core/screenplay-document.js";
 import { screenplayDocumentToFDX } from "../fdx/screenplay-document-to-fdx.js";
 import { screenplayDocumentToFountain } from "../fountain/screenplay-document-to-fountain.js";
-import { normalizePhysicalText } from "../pdf/normalization/physical-text.js";
+import { PdfExtractionError } from "../pdf/extraction/errors.js";
+import { extractPositionedPdfText } from "../pdf/extraction/pdf-inspector.js";
+import { inspectScreenplayPdf } from "../pdf/inspection.js";
+import { PdfInspectionError } from "../pdf/inspection-error.js";
+import { createScreenplayDocument } from "./create-screenplay-document.js";
+import type { PositionedTextPage } from "./positioned-text-page.js";
+import { positionedTextToPages } from "./positioned-text-pages.js";
 import { ScreenplayConversionError } from "./screenplay-conversion-error.js";
-import type {
-  PositionedTextPage,
-  PositionedTextPageItem,
-} from "./positioned-text-page.js";
 
-interface ValidatedPage {
-  readonly pageIndex: number;
-  readonly items: readonly PositionedTextPageItem[];
-  readonly sourceMethod: SourceMethod;
-}
-
-interface AssembledPositionedText {
-  readonly positionedText: PositionedText;
-  readonly representedPageIndexes: readonly number[];
+interface PageRoutes {
+  readonly nativePageIndexes: readonly number[];
+  readonly ocrPageIndexes: readonly number[];
 }
 
 export function screenplayToJSON(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string {
-  const document = createScreenplayDocument(nativePages, ocrPages);
+  const document = createDocumentFromPdf(
+    pdfBytes,
+    nativePageIndexes,
+    ocrPageIndexes,
+  );
 
   return `${JSON.stringify(document, null, 2)}\n`;
 }
 
 export function screenplayToFountain(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string {
-  const document = createScreenplayDocument(nativePages, ocrPages);
+  const document = createDocumentFromPdf(
+    pdfBytes,
+    nativePageIndexes,
+    ocrPageIndexes,
+  );
 
   return screenplayDocumentToFountain(document);
 }
 
 export function screenplayToFDX(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string {
-  const document = createScreenplayDocument(nativePages, ocrPages);
+  const document = createDocumentFromPdf(
+    pdfBytes,
+    nativePageIndexes,
+    ocrPageIndexes,
+  );
 
   return screenplayDocumentToFDX(document);
 }
 
-function createScreenplayDocument(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+function createDocumentFromPdf(
+  pdfBytes: Uint8Array,
+  nativePageIndexes: unknown,
+  ocrPageIndexes: unknown,
 ): ScreenplayDocument {
-  const assembledText = validateAndAssemblePositionedText(
-    nativePages,
-    ocrPages,
-  );
-  const physicalText = groupPositionedTextIntoPhysicalLines(
-    assembledText.positionedText,
-  );
-  const normalizedText = normalizePhysicalText(
-    physicalText,
-    assembledText.representedPageIndexes,
-  );
-  const layout = inferScreenplayLayout(normalizedText);
+  const routes = validatePageRoutes(nativePageIndexes, ocrPageIndexes);
 
-  return recognizeScreenplay(normalizedText, layout);
+  try {
+    const inspection = inspectScreenplayPdf(pdfBytes);
+
+    assertRoutesWithinPdf(routes, inspection.pageCount);
+
+    const nativePages = extractNativePages(pdfBytes, routes.nativePageIndexes);
+    const ocrPages = routes.ocrPageIndexes.map(emptyPage);
+
+    return createScreenplayDocument(nativePages, ocrPages);
+  } catch (error) {
+    if (
+      error instanceof PdfExtractionError ||
+      error instanceof PdfInspectionError
+    ) {
+      throw new ScreenplayConversionError("PDF_PROCESSING_FAILED");
+    }
+
+    throw error;
+  }
 }
 
-function validateAndAssemblePositionedText(
-  nativePages: unknown,
-  ocrPages: unknown,
-): AssembledPositionedText {
-  const validatedNativePages = validatePages(nativePages, "embedded-text");
-  const validatedOcrPages = validatePages(ocrPages, "ocr");
+function validatePageRoutes(
+  nativePageIndexes: unknown,
+  ocrPageIndexes: unknown,
+): PageRoutes {
+  const validatedNativePageIndexes = validatePageIndexes(nativePageIndexes);
+  const validatedOcrPageIndexes = validatePageIndexes(ocrPageIndexes);
+  const nativePageIndexSet = new Set(validatedNativePageIndexes);
 
-  assertUniquePageIndexes(validatedNativePages);
-  assertUniquePageIndexes(validatedOcrPages);
-  assertDisjointPageIndexes(validatedNativePages, validatedOcrPages);
-
-  const pages = [...validatedNativePages, ...validatedOcrPages].sort(
-    (left, right) => left.pageIndex - right.pageIndex,
-  );
-  let sourceIndex = 0;
-  const positionedItems: PositionedTextItem[] = [];
-
-  for (const page of pages) {
-    for (const item of page.items) {
-      positionedItems.push({
-        sourceIndex,
-        sourceMethod: page.sourceMethod,
-        pageIndex: page.pageIndex,
-        text: item.text,
-        bounds: { ...item.bounds },
-        font: { ...item.font },
-        style: { ...item.style },
-      });
-      sourceIndex += 1;
-    }
+  if (
+    validatedOcrPageIndexes.some((pageIndex) =>
+      nativePageIndexSet.has(pageIndex)
+    )
+  ) {
+    throw new ScreenplayConversionError("OVERLAPPING_PAGE_INDEX");
   }
 
   return {
-    positionedText: { items: positionedItems },
-    representedPageIndexes: pages.map((page) => page.pageIndex),
+    nativePageIndexes: [...validatedNativePageIndexes].sort(
+      (left, right) => left - right,
+    ),
+    ocrPageIndexes: [...validatedOcrPageIndexes].sort(
+      (left, right) => left - right,
+    ),
   };
 }
 
-function validatePages(
-  pages: unknown,
-  sourceMethod: SourceMethod,
-): readonly ValidatedPage[] {
-  if (!Array.isArray(pages)) {
-    throw new ScreenplayConversionError("INVALID_POSITIONED_TEXT_PAGE");
+function validatePageIndexes(value: unknown): readonly number[] {
+  if (!Array.isArray(value)) {
+    throw new ScreenplayConversionError("INVALID_PAGE_INDEX");
   }
 
-  const validatedPages: ValidatedPage[] = [];
+  const pageIndexes: number[] = [];
+  const uniquePageIndexes = new Set<number>();
 
-  for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
-    validatedPages.push(validatePage(pages[pageIndex], sourceMethod));
-  }
-
-  return validatedPages;
-}
-
-function validatePage(page: unknown, sourceMethod: SourceMethod): ValidatedPage {
-  if (
-    !isRecord(page) ||
-    !isPageIndex(page.pageIndex) ||
-    !Array.isArray(page.items)
-  ) {
-    throw new ScreenplayConversionError("INVALID_POSITIONED_TEXT_PAGE");
-  }
-
-  const validatedItems: PositionedTextPageItem[] = [];
-
-  for (let itemIndex = 0; itemIndex < page.items.length; itemIndex += 1) {
-    validatedItems.push(validateItem(page.items[itemIndex]));
-  }
-
-  return {
-    pageIndex: page.pageIndex,
-    items: validatedItems,
-    sourceMethod,
-  };
-}
-
-function validateItem(item: unknown): PositionedTextPageItem {
-  if (
-    !isRecord(item) ||
-    typeof item.text !== "string" ||
-    !isBounds(item.bounds) ||
-    !isFont(item.font) ||
-    !isStyle(item.style)
-  ) {
-    throw new ScreenplayConversionError("INVALID_POSITIONED_TEXT_PAGE");
-  }
-
-  return item as unknown as PositionedTextPageItem;
-}
-
-function assertUniquePageIndexes(pages: readonly ValidatedPage[]): void {
-  const pageIndexes = new Set<number>();
-
-  for (const page of pages) {
-    if (pageIndexes.has(page.pageIndex)) {
-      throw new ScreenplayConversionError("DUPLICATE_POSITIONED_TEXT_PAGE");
+  for (const pageIndex of value) {
+    if (
+      typeof pageIndex !== "number" ||
+      !Number.isInteger(pageIndex) ||
+      pageIndex < 0
+    ) {
+      throw new ScreenplayConversionError("INVALID_PAGE_INDEX");
     }
 
-    pageIndexes.add(page.pageIndex);
+    if (uniquePageIndexes.has(pageIndex)) {
+      throw new ScreenplayConversionError("DUPLICATE_PAGE_INDEX");
+    }
+
+    uniquePageIndexes.add(pageIndex);
+    pageIndexes.push(pageIndex);
+  }
+
+  return pageIndexes;
+}
+
+function assertRoutesWithinPdf(routes: PageRoutes, pageCount: number): void {
+  if (
+    [...routes.nativePageIndexes, ...routes.ocrPageIndexes].some(
+      (pageIndex) => pageIndex >= pageCount,
+    )
+  ) {
+    throw new ScreenplayConversionError("INVALID_PAGE_INDEX");
   }
 }
 
-function assertDisjointPageIndexes(
-  nativePages: readonly ValidatedPage[],
-  ocrPages: readonly ValidatedPage[],
-): void {
-  const nativePageIndexes = new Set(
-    nativePages.map((page) => page.pageIndex),
-  );
-
-  if (ocrPages.some((page) => nativePageIndexes.has(page.pageIndex))) {
-    throw new ScreenplayConversionError("OVERLAPPING_POSITIONED_TEXT_PAGE");
+function extractNativePages(
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+): readonly PositionedTextPage[] {
+  if (nativePageIndexes.length === 0) {
+    return [];
   }
-}
 
-function isPageIndex(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isInteger(value) &&
-    value >= 0
+  const extractedPages = positionedTextToPages(
+    extractPositionedPdfText(pdfBytes, nativePageIndexes),
+  );
+  const extractedPagesByIndex = new Map(
+    extractedPages.map((page) => [page.pageIndex, page]),
+  );
+
+  return nativePageIndexes.map(
+    (pageIndex) => extractedPagesByIndex.get(pageIndex) ?? emptyPage(pageIndex),
   );
 }
 
-function isBounds(value: unknown): value is PositionedTextPageItem["bounds"] {
-  return (
-    isRecord(value) &&
-    isFiniteNumber(value.x) &&
-    isFiniteNumber(value.y) &&
-    isFiniteNumber(value.width) &&
-    isFiniteNumber(value.height)
-  );
-}
-
-function isFont(value: unknown): value is PositionedTextPageItem["font"] {
-  return (
-    isRecord(value) &&
-    typeof value.name === "string" &&
-    isFiniteNumber(value.size)
-  );
-}
-
-function isStyle(value: unknown): value is PositionedTextPageItem["style"] {
-  return (
-    isRecord(value) &&
-    typeof value.bold === "boolean" &&
-    typeof value.italic === "boolean" &&
-    typeof value.underline === "boolean" &&
-    typeof value.strikeout === "boolean"
-  );
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+function emptyPage(pageIndex: number): PositionedTextPage {
+  return { pageIndex, items: [] };
 }

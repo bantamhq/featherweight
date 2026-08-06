@@ -18,8 +18,8 @@ The result is an editable screenplay—not a pile of lines copied out of a PDF.
   character extensions, deliberate spacing, and source ordering.
 - **Three useful outputs** — clean Fountain, ready-to-open FDX, or canonical
   JSON for your own application.
-- **Flexible page routing** — combine native PDF text and OCR text page by page
-  through the same conversion API.
+- **Flexible page routing** — choose native extraction or reserve a page for
+  OCR through the same conversion API.
 - **Works where you do** — ESM and TypeScript types for Node.js, plus a small
   command-line tool.
 
@@ -64,8 +64,7 @@ version.
 
 ## Node.js API
 
-The API has two jobs: inspect the PDF, then turn positioned screenplay text
-into the format you want.
+The API has two jobs: inspect the PDF, then turn it into the format you want.
 
 ### Inspect a PDF
 
@@ -93,97 +92,59 @@ Page indexes are zero-based.
 
 ### Convert a screenplay
 
-Pass native and OCR pages separately. Featherweight combines them by physical
-page and builds one screenplay document.
+Pass the original PDF and choose which pages should use native text extraction
+and which should be reserved for OCR. Featherweight handles extraction,
+screenplay recognition, and serialization behind the public API.
 
 ```ts
+import { readFile } from "node:fs/promises";
 import {
+  inspectScreenplayPdf,
   screenplayToFDX,
   screenplayToFountain,
   screenplayToJSON,
-  type PositionedTextPage,
 } from "@bantam-hq/featherweight";
 
-const nativePages: PositionedTextPage[] = [
-  {
-    pageIndex: 0,
-    items: [
-      {
-        text: "INT. APARTMENT - NIGHT",
-        bounds: { x: 108, y: 700, width: 187.2, height: 12 },
-        font: { name: "Courier Prime", size: 12 },
-        style: {
-          bold: true,
-          italic: false,
-          underline: false,
-          strikeout: false,
-        },
-      },
-    ],
-  },
-];
+const pdfBytes = new Uint8Array(await readFile("screenplay.pdf"));
+const inspection = inspectScreenplayPdf(pdfBytes);
+const nativePageIndexes = Array.from(
+  { length: inspection.pageCount },
+  (_, pageIndex) => pageIndex,
+);
 
-const fountain = screenplayToFountain(nativePages, []);
-const json = screenplayToJSON(nativePages, []);
-const fdx = screenplayToFDX(nativePages, []);
+const fountain = screenplayToFountain(pdfBytes, nativePageIndexes, []);
+const json = screenplayToJSON(pdfBytes, nativePageIndexes, []);
+const fdx = screenplayToFDX(pdfBytes, nativePageIndexes, []);
 ```
 
 ```ts
 function screenplayToJSON(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string;
 
 function screenplayToFountain(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string;
 
 function screenplayToFDX(
-  nativePages: readonly PositionedTextPage[],
-  ocrPages: readonly PositionedTextPage[],
+  pdfBytes: Uint8Array,
+  nativePageIndexes: readonly number[],
+  ocrPageIndexes: readonly number[],
 ): string;
 ```
 
-Each `pageIndex` belongs in one input array at most. The arrays can arrive in
-any order; the items inside each page stay in the order you provide. Missing or
-empty pages keep their physical place in the screenplay, and Featherweight
-never mutates the inputs.
+Page indexes are zero-based. Each index belongs in one routing array at most,
+and the arrays can arrive in any order. Pages routed to native extraction are
+read directly from the PDF. OCR-routed pages currently preserve their physical
+place without contributing text; an OCR service adapter will fill that route in
+a later release. Featherweight never mutates the PDF bytes or routing arrays.
 
 Only physical page 0 is treated as a possible title page. Every title field is
 optional.
-
-### Positioned text
-
-```ts
-interface PositionedTextPage {
-  readonly pageIndex: number;
-  readonly items: readonly PositionedTextPageItem[];
-}
-
-interface PositionedTextPageItem {
-  readonly text: string;
-  readonly bounds: {
-    readonly x: number;
-    readonly y: number;
-    readonly width: number;
-    readonly height: number;
-  };
-  readonly font: {
-    readonly name: string;
-    readonly size: number;
-  };
-  readonly style: {
-    readonly bold: boolean;
-    readonly italic: boolean;
-    readonly underline: boolean;
-    readonly strikeout: boolean;
-  };
-}
-```
-
-The bounds place each item on its physical page. Featherweight uses that
-geometry, along with font and style information, to read the screenplay.
 
 ## Outputs
 
@@ -216,9 +177,10 @@ type PdfInspectionErrorCode =
   | "PDF_INSPECTION_FAILED";
 
 type ScreenplayConversionErrorCode =
-  | "INVALID_POSITIONED_TEXT_PAGE"
-  | "DUPLICATE_POSITIONED_TEXT_PAGE"
-  | "OVERLAPPING_POSITIONED_TEXT_PAGE"
+  | "INVALID_PAGE_INDEX"
+  | "DUPLICATE_PAGE_INDEX"
+  | "OVERLAPPING_PAGE_INDEX"
+  | "PDF_PROCESSING_FAILED"
   | "INVALID_FDX_TEXT";
 ```
 

@@ -25,7 +25,10 @@ export interface PdfInspectorTextItemInput {
 }
 
 interface PdfInspectorExtractionModule {
-  extractTextWithPositions(buffer: Buffer): readonly PdfInspectorTextItemInput[];
+  extractTextWithPositions(
+    buffer: Buffer,
+    pages?: readonly number[],
+  ): readonly PdfInspectorTextItemInput[];
 }
 
 interface PdfInspectorInspectionModule {
@@ -41,12 +44,16 @@ type PdfInspectorOperation = "extraction" | "inspection";
 
 export function extractPositionedPdfText(
   pdfBytes: Uint8Array,
+  pageIndexes?: readonly number[],
 ): PositionedText {
   const pdfInspector = loadPdfInspector("extraction");
   let nativeItems: readonly PdfInspectorTextItemInput[];
 
   try {
-    nativeItems = pdfInspector.extractTextWithPositions(toPdfBuffer(pdfBytes));
+    nativeItems = pdfInspector.extractTextWithPositions(
+      toPdfBuffer(pdfBytes),
+      pageIndexes?.map((pageIndex) => pageIndex + 1),
+    );
   } catch (cause) {
     if (cause instanceof PdfExtractionError) {
       throw cause;

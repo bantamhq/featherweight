@@ -2,6 +2,11 @@
 
 All notable changes to Featherweight are documented in this file.
 
+## 0.1.1 - 2026-08-05
+
+- Correct the public conversion API to accept PDF bytes and native/OCR page
+  routes while keeping positioned-text processing internal.
+
 ## 0.1.0 - 2026-08-05
 
 First public release.

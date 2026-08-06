@@ -1,8 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import { extractPositionedPdfText } from "../pdf/extraction/pdf-inspector.js";
-import { positionedTextToPages } from "../screenplay/positioned-text-pages.js";
+import { inspectScreenplayPdf } from "../pdf/inspection.js";
 import {
   screenplayToFDX,
   screenplayToFountain,
@@ -62,25 +61,27 @@ export async function runCli(
     return reportError(runtime, readErrorMessage, 1);
   }
 
-  let positionedText;
+  let pageCount: number;
 
   try {
-    positionedText = extractPositionedPdfText(pdfBytes);
+    pageCount = inspectScreenplayPdf(pdfBytes).pageCount;
   } catch {
     return reportError(runtime, extractionErrorMessage, 1);
   }
 
   let artifact: string;
+  const nativePageIndexes = Array.from(
+    { length: pageCount },
+    (_, pageIndex) => pageIndex,
+  );
 
   try {
-    const nativePages = positionedTextToPages(positionedText);
-
     if (command.format === "json") {
-      artifact = screenplayToJSON(nativePages, []);
+      artifact = screenplayToJSON(pdfBytes, nativePageIndexes, []);
     } else if (command.format === "fdx") {
-      artifact = screenplayToFDX(nativePages, []);
+      artifact = screenplayToFDX(pdfBytes, nativePageIndexes, []);
     } else {
-      artifact = screenplayToFountain(nativePages, []);
+      artifact = screenplayToFountain(pdfBytes, nativePageIndexes, []);
     }
   } catch {
     return reportError(runtime, conversionErrorMessage, 1);

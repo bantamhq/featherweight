@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  ScreenplayConversionError,
-  screenplayToFountain,
-  screenplayToJSON,
-} from "../../../src/index.js";
+import { screenplayDocumentToFountain } from "../../../src/fountain/screenplay-document-to-fountain.js";
+import { createScreenplayDocument } from "../../../src/screenplay/create-screenplay-document.js";
 import type {
   PositionedTextPage,
   PositionedTextPageItem,
   PositionedTextStyle,
-} from "../../../src/index.js";
+} from "../../../src/screenplay/positioned-text-page.js";
 
 const plainStyle: PositionedTextStyle = {
   bold: false,
@@ -17,6 +14,26 @@ const plainStyle: PositionedTextStyle = {
   underline: false,
   strikeout: false,
 };
+
+function screenplayToJSON(
+  nativePages: readonly PositionedTextPage[],
+  ocrPages: readonly PositionedTextPage[],
+): string {
+  return `${JSON.stringify(
+    createScreenplayDocument(nativePages, ocrPages),
+    null,
+    2,
+  )}\n`;
+}
+
+function screenplayToFountain(
+  nativePages: readonly PositionedTextPage[],
+  ocrPages: readonly PositionedTextPage[],
+): string {
+  return screenplayDocumentToFountain(
+    createScreenplayDocument(nativePages, ocrPages),
+  );
+}
 
 describe("screenplay conversion", () => {
   it("preserves a geometry-evidenced word boundary between styled source items", () => {
@@ -257,120 +274,6 @@ describe("screenplay conversion", () => {
     );
   });
 
-  it("rejects duplicate native, duplicate OCR, and overlapping page ownership through both public functions", () => {
-    const duplicatePage = page(7, item("untrusted duplicate", 108, 700));
-    const cases = [
-      {
-        nativePages: [duplicatePage, duplicatePage],
-        ocrPages: [],
-        code: "DUPLICATE_POSITIONED_TEXT_PAGE",
-        message: "Positioned text page input contains a duplicate page index.",
-      },
-      {
-        nativePages: [],
-        ocrPages: [duplicatePage, duplicatePage],
-        code: "DUPLICATE_POSITIONED_TEXT_PAGE",
-        message: "Positioned text page input contains a duplicate page index.",
-      },
-      {
-        nativePages: [duplicatePage],
-        ocrPages: [duplicatePage],
-        code: "OVERLAPPING_POSITIONED_TEXT_PAGE",
-        message: "Native and OCR page inputs overlap.",
-      },
-    ] as const;
-
-    for (const conversion of [screenplayToJSON, screenplayToFountain]) {
-      for (const testCase of cases) {
-        const error = captureError(() =>
-          conversion(testCase.nativePages, testCase.ocrPages)
-        );
-
-        expect(error).toBeInstanceOf(ScreenplayConversionError);
-        expect(error).toMatchObject({
-          code: testCase.code,
-          message: testCase.message,
-        });
-      }
-    }
-  });
-
-  it("rejects every malformed page field with the exact sanitized invalid-input error", () => {
-    const validPage = page(0, item("untrusted-secret", 108, 700));
-    const malformedPageValues: readonly unknown[] = [
-      null,
-      { ...validPage, pageIndex: -1 },
-      { ...validPage, pageIndex: 0.5 },
-      { ...validPage, items: "untrusted-items" },
-      { ...validPage, items: [null] },
-      withItem(validPage, { text: 7 }),
-      withoutItemField(validPage, "bounds"),
-      withItem(validPage, { bounds: null }),
-      withItem(validPage, {
-        bounds: { ...validPage.items[0]!.bounds, x: NaN },
-      }),
-      withItem(validPage, {
-        bounds: { ...validPage.items[0]!.bounds, y: Infinity },
-      }),
-      withItem(validPage, {
-        bounds: { ...validPage.items[0]!.bounds, width: -Infinity },
-      }),
-      withItem(validPage, {
-        bounds: { ...validPage.items[0]!.bounds, height: NaN },
-      }),
-      withoutItemField(validPage, "font"),
-      withItem(validPage, { font: null }),
-      withItem(validPage, { font: { name: 9, size: 12 } }),
-      withItem(validPage, { font: { name: "untrusted-font", size: Infinity } }),
-      withoutItemField(validPage, "style"),
-      withItem(validPage, { style: null }),
-      withItem(validPage, { style: { ...plainStyle, bold: "untrusted-bold" } }),
-      withItem(validPage, { style: { ...plainStyle, italic: 1 } }),
-      withItem(validPage, { style: { ...plainStyle, underline: null } }),
-      withItem(validPage, { style: { ...plainStyle, strikeout: undefined } }),
-    ];
-    const malformedInputs = [
-      {
-        nativePages: new Array<PositionedTextPage>(1),
-        ocrPages: [],
-      },
-      {
-        nativePages: [],
-        ocrPages: new Array<PositionedTextPage>(1),
-      },
-      {
-        nativePages: [
-          {
-            pageIndex: 0,
-            items: new Array<PositionedTextPageItem>(1),
-          },
-        ],
-        ocrPages: [],
-      },
-      ...malformedPageValues.map((malformedPage) => ({
-        nativePages: [malformedPage] as readonly PositionedTextPage[],
-        ocrPages: [],
-      })),
-    ] as const;
-
-    for (const conversion of [screenplayToJSON, screenplayToFountain]) {
-      for (const malformedInput of malformedInputs) {
-        const error = captureError(() =>
-          conversion(
-            malformedInput.nativePages,
-            malformedInput.ocrPages,
-          )
-        );
-
-        expect(error).toBeInstanceOf(ScreenplayConversionError);
-        expect(error).toMatchObject({
-          code: "INVALID_POSITIONED_TEXT_PAGE",
-          message: "Positioned text page input is invalid.",
-        });
-      }
-    }
-  });
-
   it("is byte-deterministic and leaves deeply frozen mixed inputs unchanged", () => {
     const nativePages = deepFreeze([
       page(0, item("Native line.", 108, 700)),
@@ -462,37 +365,6 @@ function action(
   alignment: "standard" | "center" = "standard",
 ) {
   return { type: "action", text: styled(runs), alignment };
-}
-
-function captureError(operation: () => unknown): unknown {
-  try {
-    operation();
-  } catch (error) {
-    return error;
-  }
-
-  throw new Error("Expected conversion to throw.");
-}
-
-function withItem(
-  sourcePage: PositionedTextPage,
-  itemPatch: Record<string, unknown>,
-): unknown {
-  return {
-    ...sourcePage,
-    items: [{ ...sourcePage.items[0], ...itemPatch }],
-  };
-}
-
-function withoutItemField(
-  sourcePage: PositionedTextPage,
-  field: keyof PositionedTextPageItem,
-): unknown {
-  const sourceItem = { ...sourcePage.items[0] };
-
-  delete sourceItem[field];
-
-  return { ...sourcePage, items: [sourceItem] };
 }
 
 function deepFreeze<Value>(value: Value): Value {

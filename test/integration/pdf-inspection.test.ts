@@ -10,11 +10,6 @@ import {
 import type {
   PdfInspection,
   PdfInspectionErrorCode,
-  PositionedTextBounds,
-  PositionedTextFont,
-  PositionedTextPage,
-  PositionedTextPageItem,
-  PositionedTextStyle,
   ScreenplayConversionErrorCode,
 } from "../../src/index.js";
 import * as featherweight from "../../src/index.js";
@@ -23,11 +18,6 @@ type PublicTypeSurface = readonly [
   PdfInspection,
   PdfInspectionErrorCode,
   ScreenplayConversionErrorCode,
-  PositionedTextPage,
-  PositionedTextPageItem,
-  PositionedTextBounds,
-  PositionedTextFont,
-  PositionedTextStyle,
 ];
 
 const fixtureCases = [
