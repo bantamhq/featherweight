@@ -1,10 +1,18 @@
 {
   "name": "@bantam-hq/featherweight",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Recover semantic screenplay documents from PDFs.",
   "type": "module",
   "license": "MIT",
   "author": "Bantam HQ",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bantamhq/featherweight.git"
+  },
+  "homepage": "https://github.com/bantamhq/featherweight#readme",
+  "bugs": {
+    "url": "https://github.com/bantamhq/featherweight/issues"
+  },
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,7 +28,7 @@
   },
   "files": [
     "dist",
-    "schemas",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md",
     "THIRD_PARTY_NOTICES.md"
@@ -37,6 +45,9 @@
     "pdf",
     "screenplay",
     "fountain",
+    "fdx",
+    "final-draft",
+    "pdf-to-text",
     "scriptwriting"
   ],
   "scripts": {
@@ -47,7 +58,8 @@
     "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm test:cli"
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm test:cli",
+    "prepublishOnly": "pnpm check"
   },
   "dependencies": {
     "@firecrawl/pdf-inspector": "1.11.2"

@@ -61,10 +61,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 Source: [FountainTests/Brick And Steel.txt](https://github.com/nyousefi/Fountain/blob/master/FountainTests/Brick%20And%20Steel.txt)
 
+`Brick & Steel` was written by Stu Maschwitz, from a story by KTM.
+
 `test/brick-and-steel.fountain`, the derived `test/brick-and-steel.pdf`, and
 the further derived `test/brick-and-steel-scanned.pdf` and
 `test/brick-and-steel-mixed.pdf` are redistributed under the upstream MIT
-License.
+License. The following is the upstream project license notice:
 
 Copyright (c) 2012 Nima Yousefi & John August
 
