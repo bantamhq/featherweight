@@ -707,6 +707,28 @@ describe("recognizeScreenplay evidence boundaries", () => {
     });
   });
 
+  it("removes extracted trailing whitespace from numbered scene headings", () => {
+    const input = normalizedText([
+      {
+        pageIndex: 0,
+        lines: [
+          {
+            text: "EXT. SUBURBAN STREET. MORNING   ",
+            x: 108,
+            y: 700,
+            styles: ["bold"],
+          },
+          { text: "15", x: 540, y: 700 },
+        ],
+      },
+    ]);
+
+    expect(recognizeScreenplay(input, establishedLayout)).toEqual({
+      titlePage: [],
+      elements: [scene("EXT. SUBURBAN STREET. MORNING", "15")],
+    });
+  });
+
   it("uses the document sentence-spacing convention only at physical-wrap joins", () => {
     const oneSpaceInput = normalizedText([
       {

@@ -8,6 +8,7 @@ import type {
 } from "../screenplay-document.js";
 import {
   createStyledText,
+  trimStyledTextEnd,
   type LineJoin,
 } from "./styled-text.js";
 import type { SentenceSpacingConvention } from "./sentence-spacing.js";
@@ -414,7 +415,7 @@ export function createSceneHeading(
 ): SceneHeading {
   return {
     type: "scene-heading",
-    text: createStyledText(evidence.headingLines),
+    text: trimStyledTextEnd(createStyledText(evidence.headingLines)),
     sceneNumber: evidence.sceneNumber,
   };
 }

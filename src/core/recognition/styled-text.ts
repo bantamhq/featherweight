@@ -84,6 +84,10 @@ export function styledTextValue(text: StyledText): string {
   return text.runs.map((run) => run.text).join("");
 }
 
+export function trimStyledTextEnd(text: StyledText): StyledText {
+  return sliceStyledText(text, styledTextValue(text).trimEnd().length);
+}
+
 export function sliceStyledText(text: StyledText, end: number): StyledText {
   const runs: TextRun[] = [];
   let remaining = end;
